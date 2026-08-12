@@ -1,7 +1,7 @@
 const { DataTypes } = require('sequelize');
 const sequelize = require('../config/database');
 
-const Tenant = sequelize.define('Tenant', {
+const Landlord = sequelize.define('Landlord', {
   id: {
     type: DataTypes.INTEGER,
     autoIncrement: true,
@@ -28,49 +28,25 @@ const Tenant = sequelize.define('Tenant', {
     type: DataTypes.STRING,
     defaultValue: ''
   },
-  nationalId: {
+  taxId: {
     type: DataTypes.STRING,
     defaultValue: ''
   },
-  idType: {
+  address: {
     type: DataTypes.STRING,
-    defaultValue: 'National ID'
+    defaultValue: ''
   },
-  propertyId: {
-    type: DataTypes.INTEGER,
-    allowNull: true
-  },
-  unitId: {
-    type: DataTypes.INTEGER,
-    allowNull: true
-  },
-  leaseStart: {
-    type: DataTypes.DATE,
-    allowNull: true
-  },
-  leaseEnd: {
-    type: DataTypes.DATE,
-    allowNull: true
-  },
-  rentAmount: {
-    type: DataTypes.DECIMAL(12, 2),
-    defaultValue: 0.00
-  },
-  depositAmount: {
-    type: DataTypes.DECIMAL(12, 2),
-    defaultValue: 0.00
-  },
-  emergencyContact: {
+  bankDetails: {
     type: DataTypes.JSON,
     defaultValue: {}
   },
   status: {
-    type: DataTypes.ENUM('Active', 'Inactive', 'Pending', 'Archived'),
+    type: DataTypes.ENUM('Active', 'Inactive'),
     defaultValue: 'Active'
   }
 }, {
-  tableName: 'tenants',
+  tableName: 'landlords',
   timestamps: true
 });
 
-module.exports = Tenant;
+module.exports = Landlord;

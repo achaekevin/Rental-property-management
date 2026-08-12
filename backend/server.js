@@ -1,27 +1,39 @@
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
+const helmet = require('helmet');
+const rateLimit = require('express-rate-limit');
 const { sequelize } = require('./models');
 
 const app = express();
 
-// Database connection
+// Security Middlewares
+app.use(helmet());
+
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 300,
+  message: { success: false, message: 'Too many requests from this IP, please try again later.' }
+});
+app.use(limiter);
+
+// Standard Middlewares
+app.use(cors());
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+
+// Database Connection Authentication
 sequelize.authenticate()
   .then(() => {
-    console.log('Connected to MySQL Database via Sequelize');
-    return sequelize.sync({ alter: false });
+    console.log('Connected to MySQL 8.4 Database via Sequelize successfully.');
   })
-  .then(() => console.log('Database synced successfully'))
-  .catch(err => console.error('MySQL Connection Error:', err.message));
+  .catch(err => {
+    console.error('MySQL Connection Failure:', err.message);
+  });
 
-// Middleware
-app.use(cors());
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
-
-// Health Check
+// Health Check Endpoint
 app.get('/api/health', (req, res) => {
-  res.json({ status: 'UP', timestamp: new Date() });
+  res.json({ status: 'UP', service: 'Rental Property Management Backend API', timestamp: new Date() });
 });
 
 // API Routes
@@ -38,21 +50,25 @@ app.use('/api/analytics', require('./routes/analytics'));
 
 // 404 Route Handler
 app.use((req, res) => {
-  res.status(404).json({ message: `Route ${req.originalUrl} not found` });
+  res.status(404).json({ success: false, message: `Route ${req.originalUrl} not found` });
 });
 
 // Centralized Error Handling Middleware
 app.use((err, req, res, next) => {
-  console.error('Unhandled Error:', err.stack);
+  console.error('Unhandled Server Error:', err.stack);
   res.status(err.status || 500).json({
+    success: false,
     message: err.message || 'Internal Server Error',
-    error: process.env.NODE_ENV === 'development' ? err : {}
+    error: process.env.NODE_ENV === 'development' ? err.message : {}
   });
 });
 
-const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
-  console.log(`Rental Property Management Backend running on port ${PORT}`);
-});
+if (require.main === module) {
+  const PORT = process.env.PORT || 5000;
+  app.listen(PORT, () => {
+    console.log(`Rental Property Management Backend running on port ${PORT}`);
+  });
+}
+
 
 module.exports = app;

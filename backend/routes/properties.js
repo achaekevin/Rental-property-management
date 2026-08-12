@@ -1,75 +1,15 @@
 const express = require('express');
 const router = express.Router();
-const { Property, Unit } = require('../models');
+const propertyController = require('../controllers/property.controller');
+const { propertyValidation } = require('../validators/property.validator');
+const { verifyToken, authorizeRoles } = require('../middleware/auth');
 
-// Get all properties
-router.get('/', async (req, res) => {
-  try {
-    const properties = await Property.findAll({
-      include: [{ model: Unit, as: 'unitList' }]
-    });
-    const result = properties.map(p => {
-      const data = p.toJSON();
-      data._id = p.id;
-      return data;
-    });
-    res.json(result);
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
-});
+router.use(verifyToken);
 
-// Add new property
-router.post('/', async (req, res) => {
-  try {
-    const property = await Property.create(req.body);
-    const data = property.toJSON();
-    data._id = property.id;
-    res.status(201).json(data);
-  } catch (err) {
-    res.status(400).json({ message: err.message });
-  }
-});
-
-// Get single property
-router.get('/:id', async (req, res) => {
-  try {
-    const property = await Property.findByPk(req.params.id, {
-      include: [{ model: Unit, as: 'unitList' }]
-    });
-    if (!property) return res.status(404).json({ message: 'Property not found' });
-    const data = property.toJSON();
-    data._id = property.id;
-    res.json(data);
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
-});
-
-// Update property
-router.put('/:id', async (req, res) => {
-  try {
-    const property = await Property.findByPk(req.params.id);
-    if (!property) return res.status(404).json({ message: 'Property not found' });
-    await property.update(req.body);
-    const data = property.toJSON();
-    data._id = property.id;
-    res.json(data);
-  } catch (err) {
-    res.status(400).json({ message: err.message });
-  }
-});
-
-// Delete property
-router.delete('/:id', async (req, res) => {
-  try {
-    const property = await Property.findByPk(req.params.id);
-    if (!property) return res.status(404).json({ message: 'Property not found' });
-    await property.destroy();
-    res.json({ message: 'Property deleted successfully' });
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
-});
+router.get('/', (req, res) => propertyController.getAll(req, res));
+router.get('/:id', (req, res) => propertyController.getById(req, res));
+router.post('/', authorizeRoles('SuperAdmin', 'Admin', 'PropertyManager'), propertyValidation, (req, res) => propertyController.create(req, res));
+router.put('/:id', authorizeRoles('SuperAdmin', 'Admin', 'PropertyManager'), (req, res) => propertyController.update(req, res));
+router.delete('/:id', authorizeRoles('SuperAdmin', 'Admin'), (req, res) => propertyController.delete(req, res));
 
 module.exports = router;

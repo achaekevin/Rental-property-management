@@ -11,6 +11,18 @@ const Unit = sequelize.define('Unit', {
     type: DataTypes.INTEGER,
     allowNull: false
   },
+  buildingId: {
+    type: DataTypes.INTEGER,
+    allowNull: true
+  },
+  floorId: {
+    type: DataTypes.INTEGER,
+    allowNull: true
+  },
+  unitTypeId: {
+    type: DataTypes.INTEGER,
+    allowNull: true
+  },
   unitNumber: {
     type: DataTypes.STRING,
     allowNull: false
@@ -27,13 +39,17 @@ const Unit = sequelize.define('Unit', {
     type: DataTypes.INTEGER,
     defaultValue: 1
   },
-  rentAmount: {
+  sizeSqft: {
     type: DataTypes.DECIMAL(10, 2),
+    defaultValue: 0.00
+  },
+  rentAmount: {
+    type: DataTypes.DECIMAL(12, 2),
     allowNull: false
   },
   depositAmount: {
-    type: DataTypes.DECIMAL(10, 2),
-    defaultValue: 0
+    type: DataTypes.DECIMAL(12, 2),
+    defaultValue: 0.00
   },
   status: {
     type: DataTypes.ENUM('AVAILABLE', 'OCCUPIED', 'RESERVED', 'UNDER_MAINTENANCE'),
@@ -44,6 +60,7 @@ const Unit = sequelize.define('Unit', {
     defaultValue: []
   }
 }, {
+  tableName: 'units',
   timestamps: true
 });
 

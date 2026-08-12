@@ -7,6 +7,10 @@ const Payment = sequelize.define('Payment', {
     autoIncrement: true,
     primaryKey: true
   },
+  organizationId: {
+    type: DataTypes.INTEGER,
+    allowNull: true
+  },
   tenantId: {
     type: DataTypes.INTEGER,
     allowNull: true
@@ -19,8 +23,16 @@ const Payment = sequelize.define('Payment', {
     type: DataTypes.INTEGER,
     allowNull: true
   },
+  invoiceId: {
+    type: DataTypes.INTEGER,
+    allowNull: true
+  },
+  paymentMethodId: {
+    type: DataTypes.INTEGER,
+    allowNull: true
+  },
   amount: {
-    type: DataTypes.DECIMAL(10, 2),
+    type: DataTypes.DECIMAL(12, 2),
     allowNull: false
   },
   paymentMethod: {
@@ -52,6 +64,7 @@ const Payment = sequelize.define('Payment', {
     defaultValue: DataTypes.NOW
   }
 }, {
+  tableName: 'payments',
   timestamps: true
 });
 

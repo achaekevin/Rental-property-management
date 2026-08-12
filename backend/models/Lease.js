@@ -7,6 +7,10 @@ const Lease = sequelize.define('Lease', {
     autoIncrement: true,
     primaryKey: true
   },
+  organizationId: {
+    type: DataTypes.INTEGER,
+    allowNull: true
+  },
   tenantId: {
     type: DataTypes.INTEGER,
     allowNull: false
@@ -19,6 +23,10 @@ const Lease = sequelize.define('Lease', {
     type: DataTypes.INTEGER,
     allowNull: false
   },
+  leaseNumber: {
+    type: DataTypes.STRING,
+    allowNull: true
+  },
   startDate: {
     type: DataTypes.DATE,
     allowNull: false
@@ -28,16 +36,20 @@ const Lease = sequelize.define('Lease', {
     allowNull: false
   },
   rentAmount: {
-    type: DataTypes.DECIMAL(10, 2),
+    type: DataTypes.DECIMAL(12, 2),
     allowNull: false
   },
   depositAmount: {
-    type: DataTypes.DECIMAL(10, 2),
-    defaultValue: 0
+    type: DataTypes.DECIMAL(12, 2),
+    defaultValue: 0.00
   },
   paymentFrequency: {
     type: DataTypes.STRING,
     defaultValue: 'Monthly'
+  },
+  dueDay: {
+    type: DataTypes.INTEGER,
+    defaultValue: 1
   },
   status: {
     type: DataTypes.ENUM('DRAFT', 'ACTIVE', 'EXPIRING', 'EXPIRED', 'TERMINATED', 'RENEWED'),
@@ -48,6 +60,7 @@ const Lease = sequelize.define('Lease', {
     defaultValue: []
   }
 }, {
+  tableName: 'leases',
   timestamps: true
 });
 

@@ -7,13 +7,41 @@ const Property = sequelize.define('Property', {
     autoIncrement: true,
     primaryKey: true
   },
+  organizationId: {
+    type: DataTypes.INTEGER,
+    allowNull: true
+  },
+  propertyTypeId: {
+    type: DataTypes.INTEGER,
+    allowNull: true
+  },
   name: {
     type: DataTypes.STRING,
     allowNull: false
   },
+  code: {
+    type: DataTypes.STRING,
+    allowNull: true
+  },
   address: {
     type: DataTypes.STRING,
     allowNull: false
+  },
+  city: {
+    type: DataTypes.STRING,
+    defaultValue: ''
+  },
+  state: {
+    type: DataTypes.STRING,
+    defaultValue: ''
+  },
+  zipCode: {
+    type: DataTypes.STRING,
+    defaultValue: ''
+  },
+  country: {
+    type: DataTypes.STRING,
+    defaultValue: 'Kenya'
   },
   units: {
     type: DataTypes.INTEGER,
@@ -25,22 +53,23 @@ const Property = sequelize.define('Property', {
     defaultValue: 0
   },
   rentAmount: {
-    type: DataTypes.DECIMAL(10, 2),
-    defaultValue: 0
+    type: DataTypes.DECIMAL(12, 2),
+    defaultValue: 0.00
   },
   amenities: {
     type: DataTypes.JSON,
     defaultValue: []
   },
   status: {
-    type: DataTypes.ENUM('Vacant', 'Occupied'),
-    defaultValue: 'Vacant'
+    type: DataTypes.ENUM('Vacant', 'Occupied', 'UnderMaintenance', 'Active', 'Inactive'),
+    defaultValue: 'Active'
   },
   photos: {
     type: DataTypes.JSON,
     defaultValue: []
   }
 }, {
+  tableName: 'properties',
   timestamps: true
 });
 
