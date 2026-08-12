@@ -13,4 +13,7 @@ router.post('/login', loginValidation, (req, res, next) => authController.login(
 // GET /api/auth/me
 router.get('/me', verifyToken, (req, res, next) => authController.me(req, res, next));
 
+// PUT /api/auth/profile
+router.put('/profile', verifyToken, (req, res, next) => authController.updateProfile(req, res, next));
+
 module.exports = router;

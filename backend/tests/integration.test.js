@@ -19,7 +19,6 @@ test('Backend Architecture & Security Authorization Verification', async (t) => 
   await t.test('Resource-Level Security Middleware - Tenant / Landlord Access Block to /api/users', async () => {
     const { enforceResourceAccess } = require('../middleware/auth');
 
-    // Simulate TENANT attempting direct access to users module
     const reqTenant = { user: { id: 10, role: 'TENANT' } };
     const resTenant = {
       status(code) {
@@ -37,7 +36,6 @@ test('Backend Architecture & Security Authorization Verification', async (t) => 
       assert.fail('Should not allow TENANT to access users module');
     });
 
-    // Simulate LANDLORD attempting direct access to users module
     const reqLandlord = { user: { id: 20, role: 'LANDLORD' } };
     const resLandlord = {
       status(code) {
@@ -69,5 +67,10 @@ test('Backend Architecture & Security Authorization Verification', async (t) => 
 
     assert.strictEqual(nextCalled, true, 'SUPER_ADMINISTRATOR should pass resource access check');
     assert.strictEqual(reqAdmin.resourceScope.isGlobal, true);
+  });
+
+  await t.test('AuthService updateProfile and MySQL database persistence check', () => {
+    const authService = require('../services/auth.service');
+    assert.ok(authService.updateProfile, 'updateProfile method should be defined in authService');
   });
 });

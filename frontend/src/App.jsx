@@ -7,7 +7,7 @@ import TenantManagement from './components/TenantManagement';
 import RentPayment from './components/RentPayment';
 import MaintenanceRequests from './components/MaintenanceRequests';
 import ReportsAnalytics from './components/ReportsAnalytics';
-import Navigation from './components/Navigation';
+import Profile from './components/Profile';
 import ErrorBoundary from './components/ErrorBoundary';
 import TenantPortal from './components/TenantPortal';
 import TenantLogin from './components/TenantLogin';
@@ -44,11 +44,9 @@ function AppContent() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Set Firebase persistence to ensure user sessions are maintained across refreshes
     setPersistence(auth, browserLocalPersistence)
       .then(() => {
-        // Once persistence is set, check localStorage (if used for additional tenant info)
-        const authToken = localStorage.getItem('tenantToken');
+        const authToken = localStorage.getItem('token') || localStorage.getItem('tenantToken');
         const role = localStorage.getItem('userRole');
 
         if (authToken && role) {
@@ -61,8 +59,7 @@ function AppContent() {
         setLoading(false);
       })
       .catch((error) => {
-        // Fallback: check localStorage even if setting persistence fails
-        const authToken = localStorage.getItem('tenantToken');
+        const authToken = localStorage.getItem('token') || localStorage.getItem('tenantToken');
         const role = localStorage.getItem('userRole');
         if (authToken && role) {
           setIsAuthenticated(true);
@@ -89,32 +86,28 @@ function AppContent() {
       <Router>
         <ErrorBoundary>
           <Routes>
-            {/* Redirect to Tenant Login as the initial page */}
             <Route path="/" element={<Navigate to="/tenant/login" />} />
 
-            {/* Tenant Authentication Pages */}
             <Route path="/tenant/login" element={<TenantLogin />} />
             <Route path="/tenant/register" element={<TenantRegister />} />
             <Route path="/tenant/reset-password" element={<TenantResetPassword />} />
 
-            {/* Tenant Portal (Protected Routes) */}
             <Route
               path="/tenant/*"
               element={
                 <>
                   <TenantPortal />
-                  {isAuthenticated && <Chatbot />} {/* Render chatbot only if authenticated */}
+                  {isAuthenticated && <Chatbot />}
                 </>
               }
             />
 
-            {/* Admin Pages (Protected by AdminRoute) */}
             <Route
               path="/dashboard"
               element={
                 <AdminRoute userRole={userRole}>
                   <Dashboard />
-                  {isAuthenticated && <Chatbot />} {/* Render chatbot only if authenticated */}
+                  {isAuthenticated && <Chatbot />}
                 </AdminRoute>
               }
             />
@@ -123,7 +116,7 @@ function AppContent() {
               element={
                 <AdminRoute userRole={userRole}>
                   <PropertyManagement />
-                  {isAuthenticated && <Chatbot />} {/* Render chatbot only if authenticated */}
+                  {isAuthenticated && <Chatbot />}
                 </AdminRoute>
               }
             />
@@ -132,7 +125,7 @@ function AppContent() {
               element={
                 <AdminRoute userRole={userRole}>
                   <TenantManagement />
-                  {isAuthenticated && <Chatbot />} {/* Render chatbot only if authenticated */}
+                  {isAuthenticated && <Chatbot />}
                 </AdminRoute>
               }
             />
@@ -141,7 +134,7 @@ function AppContent() {
               element={
                 <AdminRoute userRole={userRole}>
                   <RentPayment />
-                  {isAuthenticated && <Chatbot />} {/* Render chatbot only if authenticated */}
+                  {isAuthenticated && <Chatbot />}
                 </AdminRoute>
               }
             />
@@ -150,7 +143,7 @@ function AppContent() {
               element={
                 <AdminRoute userRole={userRole}>
                   <MaintenanceRequests />
-                  {isAuthenticated && <Chatbot />} {/* Render chatbot only if authenticated */}
+                  {isAuthenticated && <Chatbot />}
                 </AdminRoute>
               }
             />
@@ -159,7 +152,16 @@ function AppContent() {
               element={
                 <AdminRoute userRole={userRole}>
                   <ReportsAnalytics />
-                  {isAuthenticated && <Chatbot />} {/* Render chatbot only if authenticated */}
+                  {isAuthenticated && <Chatbot />}
+                </AdminRoute>
+              }
+            />
+            <Route
+              path="/profile"
+              element={
+                <AdminRoute userRole={userRole}>
+                  <Profile />
+                  {isAuthenticated && <Chatbot />}
                 </AdminRoute>
               }
             />
@@ -176,7 +178,7 @@ const App = () => {
       <AuthProvider>
         <AppContent />
       </AuthProvider>
-      </DarkModeProvider>
+    </DarkModeProvider>
   );
 };
 

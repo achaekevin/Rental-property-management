@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Box, 
   Drawer, 
@@ -15,7 +15,10 @@ import {
   Avatar,
   useMediaQuery,
   useTheme,
-  Button
+  Button,
+  Menu,
+  MenuItem,
+  Tooltip
 } from '@mui/material';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { 
@@ -27,20 +30,20 @@ import {
   Build as MaintenanceIcon,
   Assessment as ReportsIcon,
   ExitToApp as LogoutIcon,
-  AdminPanelSettings as AdminIcon,
-  Business as BusinessIcon,
-  Receipt as InvoiceIcon,
-  MonetizationOn as ExpenseIcon,
   Shield as ShieldIcon,
-  Person as PersonIcon
+  Person as PersonIcon,
+  AccountCircle as AccountCircleIcon
 } from '@mui/icons-material';
 import { auth } from '../firebase';
 import { signOut } from 'firebase/auth';
+import api from '../services/api';
 
 const DRAWER_WIDTH = 260;
 
 const Navigation = () => {
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [profileMenuAnchor, setProfileMenuAnchor] = useState(null);
+  const [currentUser, setCurrentUser] = useState(null);
   const location = useLocation();
   const navigate = useNavigate();
   const theme = useTheme();
@@ -48,8 +51,31 @@ const Navigation = () => {
 
   const userRole = localStorage.getItem('userRole') || 'SUPER_ADMINISTRATOR';
 
+  useEffect(() => {
+    fetchProfile();
+  }, []);
+
+  const fetchProfile = async () => {
+    try {
+      const res = await api.get('/auth/me');
+      if (res.data && res.data.success) {
+        setCurrentUser(res.data.user);
+      }
+    } catch (e) {
+      console.log('Error fetching user profile info:', e);
+    }
+  };
+
   const handleDrawerToggle = () => {
     setMobileOpen(!mobileOpen);
+  };
+
+  const handleOpenProfileMenu = (event) => {
+    setProfileMenuAnchor(event.currentTarget);
+  };
+
+  const handleCloseProfileMenu = () => {
+    setProfileMenuAnchor(null);
   };
 
   const handleLogout = async () => {
@@ -64,6 +90,10 @@ const Navigation = () => {
 
   // Role-tailored navigation items on the Left Sidebar
   const getNavItems = () => {
+    const commonItems = [
+      { text: "My Profile", path: "/profile", icon: <PersonIcon /> }
+    ];
+
     switch (userRole) {
       case 'SUPER_ADMINISTRATOR':
         return [
@@ -72,7 +102,8 @@ const Navigation = () => {
           { text: "Tenants", path: "/tenants", icon: <TenantsIcon /> },
           { text: "Payments", path: "/payments", icon: <PaymentsIcon /> },
           { text: "Maintenance", path: "/maintenance", icon: <MaintenanceIcon /> },
-          { text: "Reports & Analytics", path: "/reports", icon: <ReportsIcon /> }
+          { text: "Reports & Analytics", path: "/reports", icon: <ReportsIcon /> },
+          ...commonItems
         ];
       case 'PROPERTY_MANAGER':
         return [
@@ -81,7 +112,8 @@ const Navigation = () => {
           { text: "Tenants & Leases", path: "/tenants", icon: <TenantsIcon /> },
           { text: "Rent Payments", path: "/payments", icon: <PaymentsIcon /> },
           { text: "Maintenance Requests", path: "/maintenance", icon: <MaintenanceIcon /> },
-          { text: "Financial Reports", path: "/reports", icon: <ReportsIcon /> }
+          { text: "Financial Reports", path: "/reports", icon: <ReportsIcon /> },
+          ...commonItems
         ];
       case 'LANDLORD':
         return [
@@ -90,7 +122,8 @@ const Navigation = () => {
           { text: "Tenants Overview", path: "/tenants", icon: <TenantsIcon /> },
           { text: "Financial Records", path: "/payments", icon: <PaymentsIcon /> },
           { text: "Maintenance Log", path: "/maintenance", icon: <MaintenanceIcon /> },
-          { text: "Income Reports", path: "/reports", icon: <ReportsIcon /> }
+          { text: "Income Reports", path: "/reports", icon: <ReportsIcon /> },
+          ...commonItems
         ];
       case 'TENANT':
       default:
@@ -98,7 +131,8 @@ const Navigation = () => {
           { text: "Tenant Dashboard", path: "/dashboard", icon: <DashboardIcon /> },
           { text: "My Tenancy", path: "/properties", icon: <PropertiesIcon /> },
           { text: "M-Pesa Payments", path: "/payments", icon: <PaymentsIcon /> },
-          { text: "Maintenance Tickets", path: "/maintenance", icon: <MaintenanceIcon /> }
+          { text: "Maintenance Tickets", path: "/maintenance", icon: <MaintenanceIcon /> },
+          ...commonItems
         ];
     }
   };
@@ -231,19 +265,103 @@ const Navigation = () => {
 
   return (
     <>
-      {/* Top Bar for Mobile Toggle */}
-      {isMobile && (
-        <AppBar position="sticky" sx={{ bgcolor: '#1a237e' }}>
-          <Toolbar>
-            <IconButton color="inherit" edge="start" onClick={handleDrawerToggle} sx={{ mr: 2 }}>
-              <MenuIcon />
-            </IconButton>
-            <Typography variant="h6" fontWeight={700}>
-              Renta Hive
+      {/* Top Bar for Desktop Profile Header & Mobile Toggle */}
+      <AppBar 
+        position="fixed" 
+        sx={{ 
+          width: { md: `calc(100% - ${DRAWER_WIDTH}px)` },
+          ml: { md: `${DRAWER_WIDTH}px` },
+          bgcolor: '#ffffff',
+          color: '#1a237e',
+          boxShadow: '0 1px 4px rgba(0,0,0,0.08)',
+          zIndex: (theme) => theme.zIndex.drawer + 1
+        }}
+      >
+        <Toolbar sx={{ justifyContent: 'space-between' }}>
+          <Box display="flex" alignItems="center">
+            {isMobile && (
+              <IconButton color="inherit" edge="start" onClick={handleDrawerToggle} sx={{ mr: 2 }}>
+                <MenuIcon />
+              </IconButton>
+            )}
+            <Typography variant="h6" fontWeight={700} color="primary">
+              Renta Hive Dashboard
             </Typography>
-          </Toolbar>
-        </AppBar>
-      )}
+          </Box>
+
+          {/* Top Right User Profile Widget */}
+          <Box display="flex" alignItems="center" gap={1.5}>
+            <Tooltip title="View Profile & Credentials">
+              <Box 
+                onClick={handleOpenProfileMenu}
+                sx={{ 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  gap: 1.5, 
+                  cursor: 'pointer',
+                  p: 0.8,
+                  borderRadius: 3,
+                  '&:hover': { bgcolor: 'rgba(26, 35, 126, 0.04)' }
+                }}
+              >
+                <Avatar 
+                  src={currentUser?.avatar || undefined}
+                  sx={{ bgcolor: 'primary.main', width: 38, height: 38, fontWeight: 700 }}
+                >
+                  {currentUser?.name ? currentUser.name[0].toUpperCase() : 'U'}
+                </Avatar>
+
+                <Box sx={{ display: { xs: 'none', sm: 'block' }, textAlign: 'left' }}>
+                  <Typography variant="subtitle2" fontWeight={700} color="text.primary" lineHeight={1.2}>
+                    {currentUser?.name || 'User Profile'}
+                  </Typography>
+                  <Typography variant="caption" color="text.secondary" display="block">
+                    {currentUser?.email || userRole}
+                  </Typography>
+                </Box>
+              </Box>
+            </Tooltip>
+
+            {/* Profile Dropdown Menu */}
+            <Menu
+              anchorEl={profileMenuAnchor}
+              open={Boolean(profileMenuAnchor)}
+              onClose={handleCloseProfileMenu}
+              PaperProps={{
+                elevation: 4,
+                sx: { mt: 1.5, minWidth: 200, borderRadius: 2 }
+              }}
+            >
+              <Box sx={{ px: 2, py: 1.5 }}>
+                <Typography variant="subtitle2" fontWeight={700}>
+                  {currentUser?.name || 'Signed In User'}
+                </Typography>
+                <Typography variant="caption" color="text.secondary">
+                  {currentUser?.email}
+                </Typography>
+              </Box>
+              <Divider />
+              <MenuItem 
+                onClick={() => {
+                  handleCloseProfileMenu();
+                  navigate('/profile');
+                }}
+              >
+                <ListItemIcon><PersonIcon fontSize="small" color="primary" /></ListItemIcon>
+                My Profile & Credentials
+              </MenuItem>
+              <Divider />
+              <MenuItem onClick={handleLogout}>
+                <ListItemIcon><LogoutIcon fontSize="small" color="error" /></ListItemIcon>
+                Sign Out
+              </MenuItem>
+            </Menu>
+          </Box>
+        </Toolbar>
+      </AppBar>
+
+      {/* Spacing Offset for Fixed AppBar */}
+      <Toolbar />
 
       {/* Left Vertical Navigation Drawer */}
       <Box component="nav" sx={{ width: { md: DRAWER_WIDTH }, flexShrink: { md: 0 } }}>

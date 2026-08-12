@@ -37,6 +37,20 @@ class AuthController {
       res.status(404).json({ success: false, message: err.message });
     }
   }
+
+  async updateProfile(req, res, next) {
+    try {
+      const result = await authService.updateProfile(req.user.id, req.body);
+      res.json({
+        success: true,
+        message: 'Profile updated successfully',
+        token: result.token,
+        user: result.user
+      });
+    } catch (err) {
+      res.status(400).json({ success: false, message: err.message });
+    }
+  }
 }
 
 module.exports = new AuthController();
