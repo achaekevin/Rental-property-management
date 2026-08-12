@@ -1,14 +1,35 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
-  Box, Typography, Grid, Card, CardContent, Button, Container, LinearProgress, Chip
+  Box, Typography, Grid, Card, Container, CircularProgress
 } from '@mui/material';
-import { Analytics, Money, Home, People, Build } from '@mui/icons-material';
+import { Analytics as AnalyticsIcon } from '@mui/icons-material';
 import Navigation from './Navigation';
 import useAutoLogout from '../hooks/useAutoLogout';
+import api from '../services/api';
 
 const ReportsAnalytics = () => {
-  const [darkMode, setDarkMode] = useState(false);
+  const [metrics, setMetrics] = useState(null);
+  const [loading, setLoading] = useState(true);
+
   useAutoLogout();
+
+  useEffect(() => {
+    fetchAnalytics();
+  }, []);
+
+  const fetchAnalytics = async () => {
+    setLoading(true);
+    try {
+      const res = await api.get('/analytics/stats');
+      if (res.data && res.data.success) {
+        setMetrics(res.data.data.metrics || {});
+      }
+    } catch (err) {
+      console.error('Error fetching analytics statistics:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <Box sx={{ display: 'flex', minHeight: '100vh', bgcolor: '#f5f5f5' }}>
@@ -18,50 +39,66 @@ const ReportsAnalytics = () => {
           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4 }}>
             <Box>
               <Typography variant="h4" sx={{ fontWeight: 700, display: 'flex', alignItems: 'center', gap: 1 }}>
-                <Analytics sx={{ fontSize: '2rem' }} />
+                <AnalyticsIcon sx={{ fontSize: '2rem' }} />
                 Reports & Financial Analytics
               </Typography>
               <Typography variant="subtitle1" color="text.secondary">
-                Financial performance, occupancy metrics & maintenance reporting
+                Calculated directly from real system database records
               </Typography>
             </Box>
           </Box>
 
-          <Grid container spacing={3} sx={{ mb: 4 }}>
-            <Grid item xs={12} sm={6} md={3}>
-              <Card sx={{ p: 2, borderLeft: '4px solid #4CAF50' }}>
-                <Typography variant="subtitle2" color="text.secondary">Net Profit</Typography>
-                <Typography variant="h4" sx={{ mt: 1, fontWeight: 700 }}>KSh 450,000</Typography>
-              </Card>
-            </Grid>
-            <Grid item xs={12} sm={6} md={3}>
-              <Card sx={{ p: 2, borderLeft: '4px solid #2196F3' }}>
-                <Typography variant="subtitle2" color="text.secondary">Avg Occupancy</Typography>
-                <Typography variant="h4" sx={{ mt: 1, fontWeight: 700 }}>92.5%</Typography>
-              </Card>
-            </Grid>
-            <Grid item xs={12} sm={6} md={3}>
-              <Card sx={{ p: 2, borderLeft: '4px solid #FF9800' }}>
-                <Typography variant="subtitle2" color="text.secondary">Tenant Retention</Typography>
-                <Typography variant="h4" sx={{ mt: 1, fontWeight: 700 }}>88%</Typography>
-              </Card>
-            </Grid>
-            <Grid item xs={12} sm={6} md={3}>
-              <Card sx={{ p: 2, borderLeft: '4px solid #9C27B0' }}>
-                <Typography variant="subtitle2" color="text.secondary">Maintenance ROI</Typography>
-                <Typography variant="h4" sx={{ mt: 1, fontWeight: 700 }}>3.4x</Typography>
-              </Card>
-            </Grid>
-          </Grid>
+          {loading ? (
+            <Box display="flex" justifyContent="center" py={6}>
+              <CircularProgress />
+            </Box>
+          ) : (
+            <>
+              <Grid container spacing={3} sx={{ mb: 4 }}>
+                <Grid item xs={12} sm={6} md={3}>
+                  <Card sx={{ p: 2, borderLeft: '4px solid #4CAF50' }}>
+                    <Typography variant="subtitle2" color="text.secondary">Total Rent Collected</Typography>
+                    <Typography variant="h4" sx={{ mt: 1, fontWeight: 700 }}>
+                      KSh {(metrics?.totalRentCollected || metrics?.collectedRent || metrics?.rentCollected || 0).toLocaleString()}
+                    </Typography>
+                  </Card>
+                </Grid>
+                <Grid item xs={12} sm={6} md={3}>
+                  <Card sx={{ p: 2, borderLeft: '4px solid #2196F3' }}>
+                    <Typography variant="subtitle2" color="text.secondary">Occupancy Rate</Typography>
+                    <Typography variant="h4" sx={{ mt: 1, fontWeight: 700 }}>
+                      {metrics?.occupancyRate !== undefined ? `${metrics.occupancyRate}%` : `${metrics?.totalUnits > 0 ? Math.round((metrics.occupiedUnits / metrics.totalUnits) * 100) : 0}%`}
+                    </Typography>
+                  </Card>
+                </Grid>
+                <Grid item xs={12} sm={6} md={3}>
+                  <Card sx={{ p: 2, borderLeft: '4px solid #FF9800' }}>
+                    <Typography variant="subtitle2" color="text.secondary">Outstanding Rent Balance</Typography>
+                    <Typography variant="h4" sx={{ mt: 1, fontWeight: 700 }}>
+                      KSh {(metrics?.outstandingRent || 0).toLocaleString()}
+                    </Typography>
+                  </Card>
+                </Grid>
+                <Grid item xs={12} sm={6} md={3}>
+                  <Card sx={{ p: 2, borderLeft: '4px solid #9C27B0' }}>
+                    <Typography variant="subtitle2" color="text.secondary">Total Properties / Units</Typography>
+                    <Typography variant="h4" sx={{ mt: 1, fontWeight: 700 }}>
+                      {metrics?.totalProperties || 0} / {metrics?.totalUnits || 0}
+                    </Typography>
+                  </Card>
+                </Grid>
+              </Grid>
 
-          <Card sx={{ p: 3 }}>
-            <Typography variant="h6" fontWeight={600} mb={2}>
-              Monthly Financial Overview
-            </Typography>
-            <Typography variant="body2" color="text.secondary">
-              Detailed breakdown of rent collections, operational expenses, utility costs, and net operating income (NOI).
-            </Typography>
-          </Card>
+              <Card sx={{ p: 3 }}>
+                <Typography variant="h6" fontWeight={600} mb={2}>
+                  Real-time Database Financial Overview
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  Statistics on this page are fetched directly from your MySQL database tables (`properties`, `tenants`, `payments`, `expenses`, `invoices`). As you add, edit, or delete items in the system, these figures update automatically and persist across logouts and page refreshes.
+                </Typography>
+              </Card>
+            </>
+          )}
         </Container>
       </Box>
     </Box>

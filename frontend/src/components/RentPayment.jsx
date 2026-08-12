@@ -11,63 +11,75 @@ import {
   Select,
   MenuItem,
   Button,
-  IconButton,
   Grid,
-  Avatar,
-  Badge,
-  useTheme,
-  useMediaQuery
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Snackbar,
+  Alert,
+  CircularProgress
 } from '@mui/material';
 import {
-  Visibility,
-  CheckCircle,
-  Receipt,
-  AttachMoney,
-  CalendarToday,
-  Search,
-  Paid,
-  PendingActions,
-  Warning,
-  Download,
-  Print,
-  Email,
-  Sms,
-  CreditCard,
-  Money
+  AttachMoney as AttachMoneyIcon,
+  Add as AddIcon,
+  Search as SearchIcon
 } from '@mui/icons-material';
-import { format } from 'date-fns';
-
-const generateMockPayments = () => {
-  const statuses = ['Paid', 'Pending', 'Overdue', 'Partial', 'Cancelled'];
-  const properties = ['Sunset Villas', 'Mountain View', 'Ocean Breeze', 'Downtown Lofts', 'Garden Apartments'];
-  
-  return Array.from({ length: 25 }, (_, i) => ({
-    id: i + 1,
-    tenant: `Tenant User ${i + 1}`,
-    email: `tenant${i + 1}@renthive.com`,
-    phone: `+2547${Math.floor(Math.random() * 9000000 + 1000000)}`,
-    amount: Math.floor(Math.random() * 25000) + 15000,
-    paidAmount: statuses[i % 5] === 'Paid' ? 25000 : 0,
-    dueDate: format(new Date(2026, 7, (i % 28) + 1), 'yyyy-MM-dd'),
-    status: statuses[i % 5],
-    property: properties[i % 5],
-    unit: `A-${100 + i}`,
-    paymentMethod: 'M-Pesa'
-  }));
-};
+import api from '../services/api';
 
 const RentPayment = () => {
   const [rows, setRows] = useState([]);
   const [filteredRows, setFilteredRows] = useState([]);
   const [selectedStatus, setSelectedStatus] = useState('All');
   const [searchQuery, setSearchQuery] = useState('');
-  const theme = useTheme();
+  const [loading, setLoading] = useState(true);
+
+  // Record Payment Dialog State
+  const [openDialog, setOpenDialog] = useState(false);
+  const [amount, setAmount] = useState('');
+  const [paymentMethod, setPaymentMethod] = useState('M-Pesa');
+  const [tenantName, setTenantName] = useState('');
+  const [propertyName, setPropertyName] = useState('');
+  const [unit, setUnit] = useState('');
+  const [saving, setSaving] = useState(false);
+
+  // Notification State
+  const [snackbarOpen, setSnackbarOpen] = useState(false);
+  const [snackbarMessage, setSnackbarMessage] = useState('');
 
   useEffect(() => {
-    const mockData = generateMockPayments();
-    setRows(mockData);
-    setFilteredRows(mockData);
+    fetchPayments();
   }, []);
+
+  const fetchPayments = async () => {
+    setLoading(true);
+    try {
+      const res = await api.get('/payments');
+      if (res.data && res.data.success && Array.isArray(res.data.data)) {
+        const paymentRecords = res.data.data.map((p, index) => ({
+          id: p.id || index + 1,
+          tenant: p.tenantName || p.tenant?.name || 'Tenant User',
+          property: p.propertyName || p.property?.name || 'Renta Property',
+          unit: p.unitNumber || 'A-101',
+          amount: parseFloat(p.amount || 0),
+          dueDate: p.createdAt ? new Date(p.createdAt).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
+          status: p.status || 'SUCCESS',
+          paymentMethod: p.paymentMethod || 'M-Pesa'
+        }));
+        setRows(paymentRecords);
+        setFilteredRows(paymentRecords);
+      } else {
+        setRows([]);
+        setFilteredRows([]);
+      }
+    } catch (error) {
+      console.error('Error fetching real payments:', error);
+      setRows([]);
+      setFilteredRows([]);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
     let filtered = rows;
@@ -77,27 +89,48 @@ const RentPayment = () => {
     if (searchQuery) {
       filtered = filtered.filter((row) =>
         row.tenant.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        row.email.toLowerCase().includes(searchQuery.toLowerCase())
+        row.property.toLowerCase().includes(searchQuery.toLowerCase())
       );
     }
     setFilteredRows(filtered);
   }, [rows, selectedStatus, searchQuery]);
 
+  const handleRecordPayment = async (e) => {
+    e.preventDefault();
+    if (!amount) return;
+
+    setSaving(true);
+    try {
+      const res = await api.post('/payments', {
+        amount: parseFloat(amount),
+        paymentMethod,
+        tenantName,
+        propertyName,
+        unitNumber: unit,
+        status: 'SUCCESS'
+      });
+
+      if (res.data && res.data.success) {
+        setSnackbarMessage('Rent payment recorded and saved to database successfully!');
+        setSnackbarOpen(true);
+        setOpenDialog(false);
+        setAmount('');
+        setTenantName('');
+        setPropertyName('');
+        setUnit('');
+        fetchPayments();
+      }
+    } catch (error) {
+      setSnackbarMessage(error.response?.data?.message || 'Failed to record payment');
+      setSnackbarOpen(true);
+    } finally {
+      setSaving(false);
+    }
+  };
+
   const columns = [
     { field: 'id', headerName: 'ID', width: 70 },
-    { 
-      field: 'tenant', 
-      headerName: 'Tenant', 
-      width: 180,
-      renderCell: (params) => (
-        <Box sx={{ display: 'flex', alignItems: 'center' }}>
-          <Avatar sx={{ width: 28, height: 28, mr: 1, bgcolor: 'primary.main', fontSize: 14 }}>
-            {params.value.charAt(0)}
-          </Avatar>
-          <Typography variant="body2">{params.value}</Typography>
-        </Box>
-      )
-    },
+    { field: 'tenant', headerName: 'Tenant', width: 180 },
     { field: 'property', headerName: 'Property', width: 160 },
     { field: 'unit', headerName: 'Unit', width: 90 },
     { 
@@ -106,7 +139,7 @@ const RentPayment = () => {
       width: 140,
       renderCell: (params) => `KSh ${params.value.toLocaleString()}`
     },
-    { field: 'dueDate', headerName: 'Due Date', width: 120 },
+    { field: 'dueDate', headerName: 'Date Paid', width: 120 },
     {
       field: 'status',
       headerName: 'Status',
@@ -115,8 +148,8 @@ const RentPayment = () => {
         <Chip
           label={params.value}
           color={
-            params.value === 'Paid' ? 'success' :
-            params.value === 'Pending' ? 'warning' : 'error'
+            params.value === 'SUCCESS' || params.value === 'Paid' ? 'success' :
+            params.value === 'PENDING' || params.value === 'Pending' ? 'warning' : 'error'
           }
           size="small"
         />
@@ -133,74 +166,148 @@ const RentPayment = () => {
           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4 }}>
             <Box>
               <Typography variant="h4" sx={{ fontWeight: 700 }}>
-                <AttachMoney sx={{ verticalAlign: 'middle', mr: 1 }} />
+                <AttachMoneyIcon sx={{ verticalAlign: 'middle', mr: 1 }} />
                 Rent Payments & Invoices
               </Typography>
               <Typography variant="subtitle1" color="text.secondary">
-                {filteredRows.length} payment records
+                {filteredRows.length} real payment records in database
               </Typography>
             </Box>
+            <Button
+              variant="contained"
+              color="primary"
+              startIcon={<AddIcon />}
+              onClick={() => setOpenDialog(true)}
+              sx={{ fontWeight: 700, borderRadius: 2 }}
+            >
+              Record New Payment
+            </Button>
           </Box>
 
           <Card sx={{ p: 3, mb: 3 }}>
             <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
               <TextField
                 fullWidth
-                placeholder="Search payment records..."
+                placeholder="Search real payment records by tenant or property..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 size="small"
                 sx={{ flex: 2 }}
+                InputProps={{
+                  startAdornment: <SearchIcon sx={{ mr: 1, color: 'text.secondary' }} />
+                }}
               />
               <Select value={selectedStatus} onChange={(e) => setSelectedStatus(e.target.value)} size="small" sx={{ minWidth: 160 }}>
                 <MenuItem value="All">All Statuses</MenuItem>
-                <MenuItem value="Paid">Paid</MenuItem>
-                <MenuItem value="Pending">Pending</MenuItem>
-                <MenuItem value="Overdue">Overdue</MenuItem>
+                <MenuItem value="SUCCESS">Success / Paid</MenuItem>
+                <MenuItem value="PENDING">Pending</MenuItem>
+                <MenuItem value="FAILED">Failed</MenuItem>
               </Select>
             </Box>
           </Card>
 
           <Grid container spacing={3} sx={{ mb: 3 }}>
-            <Grid item xs={12} sm={6} md={3}>
+            <Grid item xs={12} sm={6} md={4}>
               <Card sx={{ p: 2, borderLeft: '4px solid #4CAF50' }}>
-                <Typography variant="subtitle2" color="text.secondary">Total Collected</Typography>
+                <Typography variant="subtitle2" color="text.secondary">Total Rent Collected</Typography>
                 <Typography variant="h5" sx={{ mt: 1, fontWeight: 700 }}>
-                  KSh {filteredRows.filter(r => r.status === 'Paid').reduce((sum, r) => sum + r.amount, 0).toLocaleString()}
+                  KSh {filteredRows.filter(r => r.status === 'SUCCESS' || r.status === 'Paid').reduce((sum, r) => sum + r.amount, 0).toLocaleString()}
                 </Typography>
               </Card>
             </Grid>
-            <Grid item xs={12} sm={6} md={3}>
+            <Grid item xs={12} sm={6} md={4}>
               <Card sx={{ p: 2, borderLeft: '4px solid #FFC107' }}>
                 <Typography variant="subtitle2" color="text.secondary">Pending Rent</Typography>
                 <Typography variant="h5" sx={{ mt: 1, fontWeight: 700 }}>
-                  KSh {filteredRows.filter(r => r.status === 'Pending').reduce((sum, r) => sum + r.amount, 0).toLocaleString()}
+                  KSh {filteredRows.filter(r => r.status === 'PENDING' || r.status === 'Pending').reduce((sum, r) => sum + r.amount, 0).toLocaleString()}
                 </Typography>
               </Card>
             </Grid>
-            <Grid item xs={12} sm={6} md={3}>
-              <Card sx={{ p: 2, borderLeft: '4px solid #F44336' }}>
-                <Typography variant="subtitle2" color="text.secondary">Overdue Rent</Typography>
-                <Typography variant="h5" sx={{ mt: 1, fontWeight: 700 }}>
-                  KSh {filteredRows.filter(r => r.status === 'Overdue').reduce((sum, r) => sum + r.amount, 0).toLocaleString()}
-                </Typography>
-              </Card>
-            </Grid>
-            <Grid item xs={12} sm={6} md={3}>
+            <Grid item xs={12} sm={6} md={4}>
               <Card sx={{ p: 2, borderLeft: '4px solid #2196F3' }}>
-                <Typography variant="subtitle2" color="text.secondary">Collection Rate</Typography>
+                <Typography variant="subtitle2" color="text.secondary">Total Payment Records</Typography>
                 <Typography variant="h5" sx={{ mt: 1, fontWeight: 700 }}>
-                  {filteredRows.length > 0 ? Math.round((filteredRows.filter(r => r.status === 'Paid').length / filteredRows.length) * 100) : 0}%
+                  {filteredRows.length}
                 </Typography>
               </Card>
             </Grid>
           </Grid>
 
           <Card sx={{ p: 2 }}>
-            <Box sx={{ height: 500 }}>
-              <DataGrid rows={filteredRows} columns={columns} pageSizeOptions={[10, 25]} />
-            </Box>
+            {loading ? (
+              <Box display="flex" justifyContent="center" py={6}>
+                <CircularProgress />
+              </Box>
+            ) : (
+              <Box sx={{ height: 500 }}>
+                <DataGrid rows={filteredRows} columns={columns} pageSizeOptions={[10, 25]} />
+              </Box>
+            )}
           </Card>
+
+          {/* Record Payment Dialog */}
+          <Dialog open={openDialog} onClose={() => setOpenDialog(false)} maxWidth="sm" fullWidth>
+            <DialogTitle fontWeight={700}>Record Real Rent Payment to Database</DialogTitle>
+            <form onSubmit={handleRecordPayment}>
+              <DialogContent>
+                <TextField
+                  fullWidth
+                  label="Tenant Name"
+                  value={tenantName}
+                  onChange={(e) => setTenantName(e.target.value)}
+                  required
+                  sx={{ mb: 2, mt: 1 }}
+                />
+                <TextField
+                  fullWidth
+                  label="Property Name"
+                  value={propertyName}
+                  onChange={(e) => setPropertyName(e.target.value)}
+                  required
+                  sx={{ mb: 2 }}
+                />
+                <TextField
+                  fullWidth
+                  label="Unit Number"
+                  value={unit}
+                  onChange={(e) => setUnit(e.target.value)}
+                  placeholder="e.g. A-101"
+                  sx={{ mb: 2 }}
+                />
+                <TextField
+                  fullWidth
+                  type="number"
+                  label="Amount (KSh)"
+                  value={amount}
+                  onChange={(e) => setAmount(e.target.value)}
+                  required
+                  sx={{ mb: 2 }}
+                />
+                <Select
+                  fullWidth
+                  value={paymentMethod}
+                  onChange={(e) => setPaymentMethod(e.target.value)}
+                >
+                  <MenuItem value="M-Pesa">M-Pesa</MenuItem>
+                  <MenuItem value="Bank Transfer">Bank Transfer</MenuItem>
+                  <MenuItem value="Cash">Cash</MenuItem>
+                  <MenuItem value="Cheque">Cheque</MenuItem>
+                </Select>
+              </DialogContent>
+              <DialogActions sx={{ p: 3 }}>
+                <Button onClick={() => setOpenDialog(false)}>Cancel</Button>
+                <Button type="submit" variant="contained" disabled={saving}>
+                  {saving ? 'Saving...' : 'Save Payment'}
+                </Button>
+              </DialogActions>
+            </form>
+          </Dialog>
+
+          <Snackbar open={snackbarOpen} autoHideDuration={4000} onClose={() => setSnackbarOpen(false)}>
+            <Alert severity="success" onClose={() => setSnackbarOpen(false)}>
+              {snackbarMessage}
+            </Alert>
+          </Snackbar>
         </Container>
       </Box>
     </Box>
