@@ -24,8 +24,6 @@ import {
   Shield as ShieldIcon,
   Send as SendIcon
 } from '@mui/icons-material';
-import { BarChart } from '@mui/x-charts/BarChart';
-import { PieChart } from '@mui/x-charts/PieChart';
 import Navigation from './Navigation';
 import { useTheme } from '@mui/material/styles';
 import api from '../services/api';
@@ -69,7 +67,6 @@ const Dashboard = () => {
   const theme = useTheme();
   const [statsData, setStatsData] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
   const [userRole, setUserRole] = useState(localStorage.getItem('userRole') || 'SUPER_ADMINISTRATOR');
 
   // M-Pesa STK Push Form State (Tenant Portal)
@@ -124,10 +121,20 @@ const Dashboard = () => {
   const metrics = statsData?.metrics || {};
 
   return (
-    <Box sx={{ minHeight: '100vh', bgcolor: 'background.default', pb: 6 }}>
+    <Box sx={{ display: 'flex', minHeight: '100vh', bgcolor: 'background.default' }}>
+      {/* Left Vertical Navigation Drawer */}
       <Navigation />
-      <Box sx={{ pt: 3, px: { xs: 2, sm: 4 }, maxWidth: 1400, mx: 'auto' }}>
 
+      {/* Main Dashboard Content Layout (Shifted right of the Left Sidebar) */}
+      <Box 
+        component="main" 
+        sx={{ 
+          flexGrow: 1, 
+          p: { xs: 2, sm: 4 }, 
+          width: { md: `calc(100% - 260px)` },
+          pb: 6 
+        }}
+      >
         {/* Dashboard Header */}
         <Box sx={{ mb: 4, display: 'flex', justifyContent: 'space-between', alignItems: 'center', pb: 2, borderBottom: 1, borderColor: 'divider' }}>
           <Box>
@@ -169,7 +176,7 @@ const Dashboard = () => {
                 <Grid container spacing={3}>
                   <Grid item xs={12} md={6}>
                     <Card sx={{ p: 3, borderRadius: 2 }}>
-                      <Typography variant="h6" fontWeight={600} mb= {2}>
+                      <Typography variant="h6" fontWeight={600} mb={2}>
                         System Health & Operations
                       </Typography>
                       <Alert severity="success" icon={<ShieldIcon />} sx={{ mb: 2 }}>
