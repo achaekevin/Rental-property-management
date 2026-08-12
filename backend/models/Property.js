@@ -1,18 +1,47 @@
-const mongoose = require('mongoose');
+const { DataTypes } = require('sequelize');
+const sequelize = require('../config/database');
 
-const PropertySchema = new mongoose.Schema({
-  name: { type: String, required: true },
-  address: { type: String, required: true },
-  units: { type: Number, required: true },
-  occupiedUnits: { type: Number, default: 0 },
-  rentAmount: Number,
-  amenities: [String],
-  status: { 
-    type: String, 
-    enum: ['Vacant', 'Occupied'],
-    default: 'Vacant'
+const Property = sequelize.define('Property', {
+  id: {
+    type: DataTypes.INTEGER,
+    autoIncrement: true,
+    primaryKey: true
   },
-  photos: [String]
-}, { timestamps: true });
+  name: {
+    type: DataTypes.STRING,
+    allowNull: false
+  },
+  address: {
+    type: DataTypes.STRING,
+    allowNull: false
+  },
+  units: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    defaultValue: 0
+  },
+  occupiedUnits: {
+    type: DataTypes.INTEGER,
+    defaultValue: 0
+  },
+  rentAmount: {
+    type: DataTypes.DECIMAL(10, 2),
+    defaultValue: 0
+  },
+  amenities: {
+    type: DataTypes.JSON,
+    defaultValue: []
+  },
+  status: {
+    type: DataTypes.ENUM('Vacant', 'Occupied'),
+    defaultValue: 'Vacant'
+  },
+  photos: {
+    type: DataTypes.JSON,
+    defaultValue: []
+  }
+}, {
+  timestamps: true
+});
 
-module.exports = mongoose.model('Property', PropertySchema);
+module.exports = Property;

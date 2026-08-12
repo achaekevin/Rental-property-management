@@ -1,20 +1,54 @@
-const mongoose = require('mongoose');
+const { DataTypes } = require('sequelize');
+const sequelize = require('../config/database');
 
-const LeaseSchema = new mongoose.Schema({
-  tenantId: { type: mongoose.Schema.Types.ObjectId, ref: 'Tenant', required: true },
-  propertyId: { type: mongoose.Schema.Types.ObjectId, ref: 'Property', required: true },
-  unitId: { type: mongoose.Schema.Types.ObjectId, ref: 'Unit', required: true },
-  startDate: { type: Date, required: true },
-  endDate: { type: Date, required: true },
-  rentAmount: { type: Number, required: true },
-  depositAmount: { type: Number, default: 0 },
-  paymentFrequency: { type: String, default: 'Monthly' },
-  status: {
-    type: String,
-    enum: ['DRAFT', 'ACTIVE', 'EXPIRING', 'EXPIRED', 'TERMINATED', 'RENEWED'],
-    default: 'ACTIVE'
+const Lease = sequelize.define('Lease', {
+  id: {
+    type: DataTypes.INTEGER,
+    autoIncrement: true,
+    primaryKey: true
   },
-  documents: [String]
-}, { timestamps: true });
+  tenantId: {
+    type: DataTypes.INTEGER,
+    allowNull: false
+  },
+  propertyId: {
+    type: DataTypes.INTEGER,
+    allowNull: false
+  },
+  unitId: {
+    type: DataTypes.INTEGER,
+    allowNull: false
+  },
+  startDate: {
+    type: DataTypes.DATE,
+    allowNull: false
+  },
+  endDate: {
+    type: DataTypes.DATE,
+    allowNull: false
+  },
+  rentAmount: {
+    type: DataTypes.DECIMAL(10, 2),
+    allowNull: false
+  },
+  depositAmount: {
+    type: DataTypes.DECIMAL(10, 2),
+    defaultValue: 0
+  },
+  paymentFrequency: {
+    type: DataTypes.STRING,
+    defaultValue: 'Monthly'
+  },
+  status: {
+    type: DataTypes.ENUM('DRAFT', 'ACTIVE', 'EXPIRING', 'EXPIRED', 'TERMINATED', 'RENEWED'),
+    defaultValue: 'ACTIVE'
+  },
+  documents: {
+    type: DataTypes.JSON,
+    defaultValue: []
+  }
+}, {
+  timestamps: true
+});
 
-module.exports = mongoose.model('Lease', LeaseSchema);
+module.exports = Lease;

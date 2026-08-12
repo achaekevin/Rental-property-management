@@ -1,15 +1,18 @@
 require('dotenv').config();
 const express = require('express');
-const mongoose = require('mongoose');
 const cors = require('cors');
+const { sequelize } = require('./models');
 
 const app = express();
 
 // Database connection
-const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/rental_property_db';
-mongoose.connect(MONGODB_URI)
-  .then(() => console.log('Connected to MongoDB'))
-  .catch(err => console.error('MongoDB Connection Error:', err.message));
+sequelize.authenticate()
+  .then(() => {
+    console.log('Connected to MySQL Database via Sequelize');
+    return sequelize.sync({ alter: false });
+  })
+  .then(() => console.log('Database synced successfully'))
+  .catch(err => console.error('MySQL Connection Error:', err.message));
 
 // Middleware
 app.use(cors());

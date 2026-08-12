@@ -1,25 +1,58 @@
-const mongoose = require('mongoose');
+const { DataTypes } = require('sequelize');
+const sequelize = require('../config/database');
 
-const PaymentSchema = new mongoose.Schema({
-  tenantId: { type: mongoose.Schema.Types.ObjectId, ref: 'Tenant' },
-  propertyId: { type: mongoose.Schema.Types.ObjectId, ref: 'Property' },
-  unitId: { type: mongoose.Schema.Types.ObjectId, ref: 'Unit' },
-  amount: { type: Number, required: true },
-  paymentMethod: { 
-    type: String, 
-    enum: ['M-Pesa', 'ACH', 'Credit Card', 'Cash', 'Bank Transfer'],
-    default: 'M-Pesa'
+const Payment = sequelize.define('Payment', {
+  id: {
+    type: DataTypes.INTEGER,
+    autoIncrement: true,
+    primaryKey: true
   },
-  reference: { type: String, default: '' },
-  checkoutRequestId: { type: String, default: '' },
-  phoneNumber: { type: String, default: '' },
-  invoiceNumber: { type: String, default: '' },
-  status: { 
-    type: String, 
-    enum: ['SUCCESS', 'PENDING', 'FAILED', 'CANCELLED'],
-    default: 'PENDING'
+  tenantId: {
+    type: DataTypes.INTEGER,
+    allowNull: true
   },
-  paidAt: { type: Date, default: Date.now }
-}, { timestamps: true });
+  propertyId: {
+    type: DataTypes.INTEGER,
+    allowNull: true
+  },
+  unitId: {
+    type: DataTypes.INTEGER,
+    allowNull: true
+  },
+  amount: {
+    type: DataTypes.DECIMAL(10, 2),
+    allowNull: false
+  },
+  paymentMethod: {
+    type: DataTypes.ENUM('M-Pesa', 'ACH', 'Credit Card', 'Cash', 'Bank Transfer'),
+    defaultValue: 'M-Pesa'
+  },
+  reference: {
+    type: DataTypes.STRING,
+    defaultValue: ''
+  },
+  checkoutRequestId: {
+    type: DataTypes.STRING,
+    defaultValue: ''
+  },
+  phoneNumber: {
+    type: DataTypes.STRING,
+    defaultValue: ''
+  },
+  invoiceNumber: {
+    type: DataTypes.STRING,
+    defaultValue: ''
+  },
+  status: {
+    type: DataTypes.ENUM('SUCCESS', 'PENDING', 'FAILED', 'CANCELLED'),
+    defaultValue: 'PENDING'
+  },
+  paidAt: {
+    type: DataTypes.DATE,
+    defaultValue: DataTypes.NOW
+  }
+}, {
+  timestamps: true
+});
 
-module.exports = mongoose.model('Payment', PaymentSchema);
+module.exports = Payment;

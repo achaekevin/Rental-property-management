@@ -1,18 +1,46 @@
-const mongoose = require('mongoose');
+const { DataTypes } = require('sequelize');
+const sequelize = require('../config/database');
 
-const TenantSchema = new mongoose.Schema({
-  name: { type: String, required: true },
-  email: { type: String, required: true },
-  phone: String,
-  property: { type: mongoose.Schema.Types.ObjectId, ref: 'Property' },
-  leaseStart: Date,
-  leaseEnd: Date,
-  rentAmount: Number,
+const Tenant = sequelize.define('Tenant', {
+  id: {
+    type: DataTypes.INTEGER,
+    autoIncrement: true,
+    primaryKey: true
+  },
+  name: {
+    type: DataTypes.STRING,
+    allowNull: false
+  },
+  email: {
+    type: DataTypes.STRING,
+    allowNull: false
+  },
+  phone: {
+    type: DataTypes.STRING,
+    defaultValue: ''
+  },
+  propertyId: {
+    type: DataTypes.INTEGER,
+    allowNull: true
+  },
+  leaseStart: {
+    type: DataTypes.DATE,
+    allowNull: true
+  },
+  leaseEnd: {
+    type: DataTypes.DATE,
+    allowNull: true
+  },
+  rentAmount: {
+    type: DataTypes.DECIMAL(10, 2),
+    defaultValue: 0
+  },
   emergencyContact: {
-    name: String,
-    relationship: String,
-    phone: String
+    type: DataTypes.JSON,
+    defaultValue: {}
   }
-}, { timestamps: true });
+}, {
+  timestamps: true
+});
 
-module.exports = mongoose.model('Tenant', TenantSchema);
+module.exports = Tenant;

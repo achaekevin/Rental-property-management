@@ -1,16 +1,24 @@
 const express = require('express');
 const router = express.Router();
-const Payment = require('../models/Payment');
+const { Payment, Tenant, Property, Unit } = require('../models');
 const { verifyToken } = require('../middleware/auth');
 
 // GET /api/payments
 router.get('/', async (req, res) => {
   try {
-    const payments = await Payment.find()
-      .populate('tenantId', 'name email')
-      .populate('propertyId', 'name')
-      .populate('unitId', 'unitNumber');
-    res.json(payments);
+    const payments = await Payment.findAll({
+      include: [
+        { model: Tenant, as: 'tenant', attributes: ['id', 'name', 'email'] },
+        { model: Property, as: 'property', attributes: ['id', 'name'] },
+        { model: Unit, as: 'unit', attributes: ['id', 'unitNumber'] }
+      ]
+    });
+    const result = payments.map(p => {
+      const data = p.toJSON();
+      data._id = p.id;
+      return data;
+    });
+    res.json(result);
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
@@ -19,13 +27,14 @@ router.get('/', async (req, res) => {
 // POST /api/payments (Manual payment recording)
 router.post('/', verifyToken, async (req, res) => {
   try {
-    const payment = new Payment({
+    const payment = await Payment.create({
       ...req.body,
       invoiceNumber: `INV-${Date.now().toString().slice(-6)}`,
       status: req.body.status || 'SUCCESS'
     });
-    const savedPayment = await payment.save();
-    res.status(201).json(savedPayment);
+    const data = payment.toJSON();
+    data._id = payment.id;
+    res.status(201).json(data);
   } catch (err) {
     res.status(400).json({ message: err.message });
   }
@@ -40,7 +49,7 @@ router.post('/mpesa/stkpush', async (req, res) => {
     }
 
     const checkoutRequestId = `ws_CO_${Date.now()}`;
-    const payment = new Payment({
+    const payment = await Payment.create({
       tenantId,
       propertyId,
       unitId,
@@ -53,16 +62,14 @@ router.post('/mpesa/stkpush', async (req, res) => {
       status: 'PENDING'
     });
 
-    await payment.save();
-
-    // Respond with STK Push Status
     res.status(200).json({
       ResponseCode: '0',
       ResponseDescription: 'Success. Request accepted for processing',
       MerchantRequestID: `MR_${Date.now()}`,
       CheckoutRequestID: checkoutRequestId,
       CustomerMessage: `STK Push sent to ${phoneNumber}. Please enter your M-Pesa PIN to complete payment of KES ${amount}.`,
-      paymentId: payment._id
+      paymentId: payment.id,
+      _id: payment.id
     });
   } catch (err) {
     res.status(500).json({ message: err.message });
@@ -73,16 +80,14 @@ router.post('/mpesa/stkpush', async (req, res) => {
 router.post('/mpesa/callback', async (req, res) => {
   try {
     const { CheckoutRequestID, ResultCode, ResultDesc } = req.body;
-    const payment = await Payment.findOne({ checkoutRequestId: CheckoutRequestID });
+    const payment = await Payment.findOne({ where: { checkoutRequestId: CheckoutRequestID } });
 
     if (payment) {
-      if (ResultCode === 0) {
-        payment.status = 'SUCCESS';
-        payment.paidAt = new Date();
-      } else {
-        payment.status = 'FAILED';
-      }
-      await payment.save();
+      const newStatus = (ResultCode === 0) ? 'SUCCESS' : 'FAILED';
+      await payment.update({
+        status: newStatus,
+        paidAt: new Date()
+      });
     }
 
     res.json({ status: 'Callback processed', ResultDesc });

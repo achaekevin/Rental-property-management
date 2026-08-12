@@ -1,19 +1,50 @@
-const mongoose = require('mongoose');
+const { DataTypes } = require('sequelize');
+const sequelize = require('../config/database');
 
-const UnitSchema = new mongoose.Schema({
-  propertyId: { type: mongoose.Schema.Types.ObjectId, ref: 'Property', required: true },
-  unitNumber: { type: String, required: true },
-  type: { type: String, default: 'Apartment' },
-  bedrooms: { type: Number, default: 1 },
-  bathrooms: { type: Number, default: 1 },
-  rentAmount: { type: Number, required: true },
-  depositAmount: { type: Number, default: 0 },
-  status: { 
-    type: String, 
-    enum: ['AVAILABLE', 'OCCUPIED', 'RESERVED', 'UNDER_MAINTENANCE'],
-    default: 'AVAILABLE'
+const Unit = sequelize.define('Unit', {
+  id: {
+    type: DataTypes.INTEGER,
+    autoIncrement: true,
+    primaryKey: true
   },
-  amenities: [String]
-}, { timestamps: true });
+  propertyId: {
+    type: DataTypes.INTEGER,
+    allowNull: false
+  },
+  unitNumber: {
+    type: DataTypes.STRING,
+    allowNull: false
+  },
+  type: {
+    type: DataTypes.STRING,
+    defaultValue: 'Apartment'
+  },
+  bedrooms: {
+    type: DataTypes.INTEGER,
+    defaultValue: 1
+  },
+  bathrooms: {
+    type: DataTypes.INTEGER,
+    defaultValue: 1
+  },
+  rentAmount: {
+    type: DataTypes.DECIMAL(10, 2),
+    allowNull: false
+  },
+  depositAmount: {
+    type: DataTypes.DECIMAL(10, 2),
+    defaultValue: 0
+  },
+  status: {
+    type: DataTypes.ENUM('AVAILABLE', 'OCCUPIED', 'RESERVED', 'UNDER_MAINTENANCE'),
+    defaultValue: 'AVAILABLE'
+  },
+  amenities: {
+    type: DataTypes.JSON,
+    defaultValue: []
+  }
+}, {
+  timestamps: true
+});
 
-module.exports = mongoose.model('Unit', UnitSchema);
+module.exports = Unit;

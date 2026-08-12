@@ -1,30 +1,62 @@
-const mongoose = require('mongoose');
+const { DataTypes } = require('sequelize');
+const sequelize = require('../config/database');
 
-const MaintenanceSchema = new mongoose.Schema({
-  propertyId: { type: mongoose.Schema.Types.ObjectId, ref: 'Property', required: true },
-  unitId: { type: mongoose.Schema.Types.ObjectId, ref: 'Unit' },
-  tenantId: { type: mongoose.Schema.Types.ObjectId, ref: 'Tenant' },
-  title: { type: String, required: true },
-  description: { type: String, required: true },
-  category: { 
-    type: String, 
-    enum: ['Plumbing', 'Electrical', 'HVAC', 'Appliance', 'Structural', 'Other'],
-    default: 'Plumbing'
+const Maintenance = sequelize.define('Maintenance', {
+  id: {
+    type: DataTypes.INTEGER,
+    autoIncrement: true,
+    primaryKey: true
   },
-  priority: { 
-    type: String, 
-    enum: ['Low', 'Medium', 'High', 'Urgent'],
-    default: 'Medium'
+  propertyId: {
+    type: DataTypes.INTEGER,
+    allowNull: false
   },
-  status: { 
-    type: String, 
-    enum: ['OPEN', 'ASSIGNED', 'IN_PROGRESS', 'RESOLVED', 'CLOSED'],
-    default: 'OPEN'
+  unitId: {
+    type: DataTypes.INTEGER,
+    allowNull: true
   },
-  assignedTo: { type: String, default: '' },
-  cost: { type: Number, default: 0 },
-  photos: [String],
-  completionDate: Date
-}, { timestamps: true });
+  tenantId: {
+    type: DataTypes.INTEGER,
+    allowNull: true
+  },
+  title: {
+    type: DataTypes.STRING,
+    allowNull: false
+  },
+  description: {
+    type: DataTypes.TEXT,
+    allowNull: false
+  },
+  category: {
+    type: DataTypes.ENUM('Plumbing', 'Electrical', 'HVAC', 'Appliance', 'Structural', 'Other'),
+    defaultValue: 'Plumbing'
+  },
+  priority: {
+    type: DataTypes.ENUM('Low', 'Medium', 'High', 'Urgent'),
+    defaultValue: 'Medium'
+  },
+  status: {
+    type: DataTypes.ENUM('OPEN', 'ASSIGNED', 'IN_PROGRESS', 'RESOLVED', 'CLOSED'),
+    defaultValue: 'OPEN'
+  },
+  assignedTo: {
+    type: DataTypes.STRING,
+    defaultValue: ''
+  },
+  cost: {
+    type: DataTypes.DECIMAL(10, 2),
+    defaultValue: 0
+  },
+  photos: {
+    type: DataTypes.JSON,
+    defaultValue: []
+  },
+  completionDate: {
+    type: DataTypes.DATE,
+    allowNull: true
+  }
+}, {
+  timestamps: true
+});
 
-module.exports = mongoose.model('Maintenance', MaintenanceSchema);
+module.exports = Maintenance;

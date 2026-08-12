@@ -1,36 +1,31 @@
 const express = require('express');
 const router = express.Router();
-const Property = require('../models/Property');
-const Unit = require('../models/Unit');
-const Tenant = require('../models/Tenant');
-const Payment = require('../models/Payment');
-const Expense = require('../models/Expense');
-const Maintenance = require('../models/Maintenance');
+const { Op } = require('sequelize');
+const { Property, Unit, Tenant, Payment, Expense, Maintenance } = require('../models');
 
 // GET /api/analytics/stats
 router.get('/stats', async (req, res) => {
   try {
-    const totalProperties = await Property.countDocuments();
-    const totalUnits = await Unit.countDocuments();
-    const occupiedUnits = await Unit.countDocuments({ status: 'OCCUPIED' });
-    const vacantUnits = await Unit.countDocuments({ status: 'AVAILABLE' });
-    const totalTenants = await Tenant.countDocuments();
+    const totalProperties = await Property.count();
+    const totalUnits = await Unit.count();
+    const occupiedUnits = await Unit.count({ where: { status: 'OCCUPIED' } });
+    const vacantUnits = await Unit.count({ where: { status: 'AVAILABLE' } });
+    const totalTenants = await Tenant.count();
 
     // Total revenue from successful payments
-    const revenueAgg = await Payment.aggregate([
-      { $match: { status: 'SUCCESS' } },
-      { $group: { _id: null, total: { $sum: '$amount' } } }
-    ]);
-    const totalRevenue = revenueAgg[0] ? revenueAgg[0].total : 0;
+    const totalRevenue = (await Payment.sum('amount', { where: { status: 'SUCCESS' } })) || 0;
 
     // Total expenses
-    const expenseAgg = await Expense.aggregate([
-      { $group: { _id: null, total: { $sum: '$amount' } } }
-    ]);
-    const totalExpenses = expenseAgg[0] ? expenseAgg[0].total : 0;
+    const totalExpenses = (await Expense.sum('amount')) || 0;
 
     // Maintenance ticket stats
-    const openMaintenance = await Maintenance.countDocuments({ status: { $in: ['OPEN', 'ASSIGNED', 'IN_PROGRESS'] } });
+    const openMaintenance = await Maintenance.count({
+      where: {
+        status: {
+          [Op.in]: ['OPEN', 'ASSIGNED', 'IN_PROGRESS']
+        }
+      }
+    });
 
     res.json({
       totalProperties,
@@ -39,9 +34,9 @@ router.get('/stats', async (req, res) => {
       vacantUnits,
       occupancyRate: totalUnits > 0 ? Math.round((occupiedUnits / totalUnits) * 100) : 0,
       totalTenants,
-      totalRevenue,
-      totalExpenses,
-      netIncome: totalRevenue - totalExpenses,
+      totalRevenue: Number(totalRevenue),
+      totalExpenses: Number(totalExpenses),
+      netIncome: Number(totalRevenue) - Number(totalExpenses),
       openMaintenance
     });
   } catch (err) {
