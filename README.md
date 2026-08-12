@@ -2,11 +2,18 @@
 
 ## System Overview
 
-The Rental Property Management System (Renta) is a production-grade full-stack web application for property administration, tenant operations, financial accounting, and maintenance workflows. It is backed by a normalized **MySQL 8.4** relational database with **Sequelize ORM**, strict schema definitions, migrations, seeders, Role-Based Access Control (RBAC), Granular Permission Architecture, multi-tenancy, and financial transaction integrity.
+The Rental Property Management System is a production-grade full-stack web application for property administration, tenant operations, financial accounting, and maintenance workflows. It is backed by a normalized **MySQL 8.4** relational database with **Sequelize ORM**, strict schema definitions, migrations, seeders, Role-Based Access Control (RBAC), Granular Permission Architecture, multi-tenancy, and financial transaction integrity.
 
 ---
 
 ## Technology Stack
+
+### Frontend
+- **Framework:** React 18
+- **Build Tool:** Vite
+- **Component Library:** Material-UI (MUI v5)
+- **Routing:** React Router 7
+- **HTTP Client:** Axios
 
 ### Backend
 - **Runtime:** Node.js
@@ -18,53 +25,35 @@ The Rental Property Management System (Renta) is a production-grade full-stack w
 - **Security:** Helmet, express-rate-limit, CORS, parameterized queries, Role & Resource Authorization
 - **Testing:** Node.js test runner (`node:test`) & Supertest
 
-### Frontend
-- **Framework:** React 18
-- **Build Tool:** Vite
-- **Component Library:** Material-UI (MUI v5)
-- **Routing:** React Router 7
-- **HTTP Client:** Axios
-
 ---
 
-## System Roles & Granular Permission Architecture
+## Project Structure
 
-Renta enforces a strict **Role-Level + Resource-Level Authorization System** with explicit permission guards across all REST API endpoints:
-
-### 1. Super Administrator (`SUPER_ADMINISTRATOR`)
-- **Scope:** Platform-level control across all organizations.
-- **Capabilities:** User management across all roles, organization administration, global audit logs, system configurations, and system health status.
-- **Permissions:** `user.*`, `role.*`, `system.settings.*`, `audit.view`, `property.*`, `unit.*`, `tenant.*`, `lease.*`, `invoice.*`, `payment.*`, `expense.*`, `maintenance.*`, `report.*`.
-
-### 2. Property Manager (`PROPERTY_MANAGER`)
-- **Scope:** Operational management for properties within their assigned organization.
-- **Capabilities:** Property administration, tenant onboarding, lease agreements, invoice generation, expense tracking, maintenance assignment, and operational reports.
-- **Permissions:** `property.*`, `unit.*`, `tenant.*`, `lease.*`, `invoice.*`, `payment.*`, `expense.*`, `maintenance.*`, `report.*`, `user.view`, `user.create`, `user.update`.
-
-### 3. Landlord / Property Owner (`LANDLORD`)
-- **Scope:** Investment performance monitoring for owned properties.
-- **Capabilities:** Read-only monitoring of owned properties, occupancy rates, collected rent, expenses, net income, and lease expiration alerts.
-- **Permissions:** `property.view`, `unit.view`, `tenant.view`, `lease.view`, `maintenance.view`, `expense.view`, `payment.view`, `report.view`, `report.financial`, `report.occupancy`. *(Restricted from create, update, or delete actions).*
-
-### 4. Tenant (`TENANT`)
-- **Scope:** Self-service portal scoped strictly to active lease and unit.
-- **Capabilities:** Profile management, lease document viewing, rent invoices, interactive **M-Pesa STK Push rent payments**, and maintenance request submission/tracking.
-- **Permissions:** `tenant.view`, `tenant.update`, `lease.view`, `invoice.view`, `payment.view`, `payment.create`, `maintenance.view`, `maintenance.create`, `maintenance.update`.
-
----
-
-## Database Architecture & Key Modules
-
-1. **Authentication & RBAC:** `users`, `roles`, `permissions`, `role_permissions`, `user_organizations`, `user_sessions`, `password_reset_tokens`
-2. **Multi-Tenancy:** `organizations`
-3. **Landlords & Tenants:** `landlords`, `tenants`, `tenant_emergency_contacts`
-4. **Properties & Units:** `properties`, `property_types`, `buildings`, `floors`, `units`, `unit_types`, `rooms`
-5. **Leasing:** `leases`, `lease_tenants`, `lease_charges`, `lease_renewals`, `tenant_unit_history`
-6. **Financials:** `invoices`, `invoice_items`, `payments`, `payment_allocations`, `payment_methods`, `mpesa_transactions`, `bank_transactions`
-7. **Expenses & Vendors:** `expense_categories`, `expenses`, `vendors`
-8. **Maintenance:** `maintenance_categories`, `maintenance_requests`, `maintenance_comments`, `maintenance_work_orders`
-9. **Utilities:** `utility_types`, `meters`, `meter_readings`, `utility_bills`
-10. **Inspections:** `inspections`, `inspection_items`
-11. **Documents:** `documents`
-12. **Notifications:** `notifications`, `notification_preferences`, `announcements`, `announcement_recipients`
-13. **Auditing:** `audit_logs`
+```
+Rental-property-management/
+├── backend/
+│   ├── config/             # Database connection & Sequelize configuration
+│   ├── controllers/        # Express route request handlers
+│   ├── middleware/         # Auth verification, RBAC & permission guards
+│   ├── migrations/         # Database migration scripts (MySQL 8.4)
+│   ├── models/             # Sequelize model definitions & associations
+│   ├── routes/             # REST API route endpoints
+│   ├── seeders/            # Initial system data & role seed scripts
+│   ├── services/           # Business logic & analytics services
+│   ├── tests/              # Backend test suite (node:test)
+│   ├── validators/         # Input request validators
+│   ├── .sequelizerc        # Sequelize CLI configuration
+│   └── server.js           # Express application entry point
+├── frontend/
+│   ├── public/             # Static public assets
+│   ├── src/
+│   │   ├── assets/         # App icons & graphic assets
+│   │   ├── components/     # UI components & role dashboards
+│   │   ├── context/        # React authentication & dark mode context
+│   │   ├── services/       # Axios API client services
+│   │   ├── App.jsx         # Main application component & routes
+│   │   └── main.jsx        # React DOM entry point
+│   ├── index.html          # HTML entry template
+│   └── vite.config.js      # Vite build configuration
+└── README.md
+```
