@@ -1,0 +1,48 @@
+version: '3.8'
+
+services:
+  mongodb:
+    image: mongo:latest
+    container_name: rpm_mongodb
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+    networks:
+      - rpm_network
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: rpm_backend
+    ports:
+      - "5000:5000"
+    environment:
+      - PORT=5000
+      - NODE_ENV=production
+      - MONGODB_URI=mongodb://rpm_mongodb:27017/rental_property_db
+      - JWT_SECRET=rental_property_secret_jwt_key_2026
+    depends_on:
+      - mongodb
+    networks:
+      - rpm_network
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: rpm_frontend
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    networks:
+      - rpm_network
+
+volumes:
+  mongo_data:
+
+networks:
+  rpm_network:
+    driver: bridge
