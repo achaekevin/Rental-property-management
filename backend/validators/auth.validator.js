@@ -16,7 +16,7 @@ const registerValidation = [
   body('name').trim().notEmpty().withMessage('Name is required'),
   body('email').isEmail().normalizeEmail().withMessage('Valid email is required'),
   body('password').isLength({ min: 6 }).withMessage('Password must be at least 6 characters long'),
-  body('role').optional().isIn(['SuperAdmin', 'Admin', 'PropertyManager', 'Landlord', 'Tenant', 'Accountant', 'MaintenanceStaff', 'Staff']),
+  body('role').optional().isIn(['SUPER_ADMINISTRATOR', 'PROPERTY_MANAGER', 'LANDLORD', 'TENANT']),
   validate
 ];
 

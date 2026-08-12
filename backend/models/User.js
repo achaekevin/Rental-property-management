@@ -28,16 +28,12 @@ const User = sequelize.define('User', {
   },
   role: {
     type: DataTypes.ENUM(
-      'SuperAdmin',
-      'Admin',
-      'PropertyManager',
-      'Landlord',
-      'Tenant',
-      'Accountant',
-      'MaintenanceStaff',
-      'Staff'
+      'SUPER_ADMINISTRATOR',
+      'PROPERTY_MANAGER',
+      'LANDLORD',
+      'TENANT'
     ),
-    defaultValue: 'Tenant'
+    defaultValue: 'TENANT'
   },
   phone: {
     type: DataTypes.STRING,

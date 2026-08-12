@@ -1,54 +1,50 @@
 const express = require('express');
 const router = express.Router();
-const { Unit, Property } = require('../models');
-const { verifyToken } = require('../middleware/auth');
+const { Unit } = require('../models');
+const { verifyToken, requirePermission, enforceResourceAccess } = require('../middleware/auth');
 
-// GET /api/units
-router.get('/', async (req, res) => {
+router.use(verifyToken);
+router.use(enforceResourceAccess('units'));
+
+router.get('/', requirePermission('unit.view'), async (req, res) => {
   try {
-    const { propertyId, status } = req.query;
-    const where = {};
-    if (propertyId) where.propertyId = propertyId;
-    if (status) where.status = status;
-
-    const units = await Unit.findAll({
-      where,
-      include: [{ model: Property, as: 'property', attributes: ['id', 'name', 'address'] }]
-    });
-    const result = units.map(u => {
-      const data = u.toJSON();
-      data._id = u.id;
-      return data;
-    });
-    res.json(result);
+    const { propertyId } = req.query;
+    const where = propertyId ? { propertyId } : {};
+    const units = await Unit.findAll({ where });
+    res.json({ success: true, count: units.length, data: units });
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    res.status(500).json({ success: false, message: err.message });
   }
 });
 
-// POST /api/units
-router.post('/', verifyToken, async (req, res) => {
+router.post('/', requirePermission('unit.create'), async (req, res) => {
   try {
     const unit = await Unit.create(req.body);
-    const data = unit.toJSON();
-    data._id = unit.id;
-    res.status(201).json(data);
+    res.status(201).json({ success: true, message: 'Unit created successfully', data: unit });
   } catch (err) {
-    res.status(400).json({ message: err.message });
+    res.status(400).json({ success: false, message: err.message });
   }
 });
 
-// PUT /api/units/:id
-router.put('/:id', verifyToken, async (req, res) => {
+router.put('/:id', requirePermission('unit.update'), async (req, res) => {
   try {
     const unit = await Unit.findByPk(req.params.id);
-    if (!unit) return res.status(404).json({ message: 'Unit not found' });
+    if (!unit) return res.status(404).json({ success: false, message: 'Unit not found' });
     await unit.update(req.body);
-    const data = unit.toJSON();
-    data._id = unit.id;
-    res.json(data);
+    res.json({ success: true, message: 'Unit updated successfully', data: unit });
   } catch (err) {
-    res.status(400).json({ message: err.message });
+    res.status(400).json({ success: false, message: err.message });
+  }
+});
+
+router.delete('/:id', requirePermission('unit.delete'), async (req, res) => {
+  try {
+    const unit = await Unit.findByPk(req.params.id);
+    if (!unit) return res.status(404).json({ success: false, message: 'Unit not found' });
+    await unit.destroy();
+    res.json({ success: true, message: 'Unit deleted successfully' });
+  } catch (err) {
+    res.status(400).json({ success: false, message: err.message });
   }
 });
 

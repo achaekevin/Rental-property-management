@@ -51,8 +51,8 @@ module.exports = {
       email: { type: Sequelize.STRING, allowNull: false, unique: true },
       password: { type: Sequelize.STRING, allowNull: false },
       role: {
-        type: Sequelize.ENUM('SuperAdmin', 'Admin', 'PropertyManager', 'Landlord', 'Tenant', 'Accountant', 'MaintenanceStaff', 'Staff'),
-        defaultValue: 'Tenant'
+        type: Sequelize.ENUM('SUPER_ADMINISTRATOR', 'PROPERTY_MANAGER', 'LANDLORD', 'TENANT'),
+        defaultValue: 'TENANT'
       },
       phone: { type: Sequelize.STRING, defaultValue: '' },
       avatar: { type: Sequelize.STRING, defaultValue: '' },
@@ -251,7 +251,7 @@ module.exports = {
       description: { type: Sequelize.TEXT, allowNull: false },
       category: { type: Sequelize.ENUM('Plumbing', 'Electrical', 'HVAC', 'Appliance', 'Structural', 'Other'), defaultValue: 'Plumbing' },
       priority: { type: Sequelize.ENUM('Low', 'Medium', 'High', 'Urgent'), defaultValue: 'Medium' },
-      status: { type: Sequelize.ENUM('OPEN', 'ASSIGNED', 'IN_PROGRESS', 'RESOLVED', 'CLOSED'), defaultValue: 'OPEN' },
+      status: { type: Sequelize.ENUM('SUBMITTED', 'REVIEWING', 'APPROVED', 'ASSIGNED', 'IN_PROGRESS', 'RESOLVED', 'COMPLETED', 'REJECTED', 'CLOSED'), defaultValue: 'SUBMITTED' },
       assignedTo: { type: Sequelize.STRING, defaultValue: '' },
       cost: { type: Sequelize.DECIMAL(12, 2), defaultValue: 0.00 },
       photos: { type: Sequelize.JSON, defaultValue: '[]' },

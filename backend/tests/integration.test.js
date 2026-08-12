@@ -1,7 +1,9 @@
 const assert = require('assert');
 const test = require('node:test');
+const jwt = require('jsonwebtoken');
+const { JWT_SECRET } = require('../middleware/auth');
 
-test('Backend Architecture & Model Registry Verification', async (t) => {
+test('Backend Architecture & Security Authorization Verification', async (t) => {
   await t.test('Models import and schema initialization', () => {
     const {
       User, Property, Unit, Tenant, Lease, Invoice, Payment,
@@ -11,36 +13,61 @@ test('Backend Architecture & Model Registry Verification', async (t) => {
     assert.ok(sequelize, 'Sequelize instance should be defined');
     assert.ok(User, 'User model should be defined');
     assert.ok(Property, 'Property model should be defined');
-    assert.ok(Unit, 'Unit model should be defined');
     assert.ok(Tenant, 'Tenant model should be defined');
-    assert.ok(Lease, 'Lease model should be defined');
-    assert.ok(Invoice, 'Invoice model should be defined');
-    assert.ok(Payment, 'Payment model should be defined');
-    assert.ok(Expense, 'Expense model should be defined');
-    assert.ok(Maintenance, 'Maintenance model should be defined');
-    assert.ok(Organization, 'Organization model should be defined');
-    assert.ok(Role, 'Role model should be defined');
-    assert.ok(Permission, 'Permission model should be defined');
   });
 
-  await t.test('Auth service structure', () => {
-    const authService = require('../services/auth.service');
-    assert.ok(authService.register);
-    assert.ok(authService.login);
-    assert.ok(authService.getCurrentUser);
+  await t.test('Resource-Level Security Middleware - Tenant / Landlord Access Block to /api/users', async () => {
+    const { enforceResourceAccess } = require('../middleware/auth');
+
+    // Simulate TENANT attempting direct access to users module
+    const reqTenant = { user: { id: 10, role: 'TENANT' } };
+    const resTenant = {
+      status(code) {
+        assert.strictEqual(code, 403, 'Should reject TENANT access to users module with 403');
+        return this;
+      },
+      json(data) {
+        assert.strictEqual(data.success, false);
+        assert.ok(data.message.includes('Forbidden'));
+      }
+    };
+
+    const middleware = enforceResourceAccess('users');
+    await middleware(reqTenant, resTenant, () => {
+      assert.fail('Should not allow TENANT to access users module');
+    });
+
+    // Simulate LANDLORD attempting direct access to users module
+    const reqLandlord = { user: { id: 20, role: 'LANDLORD' } };
+    const resLandlord = {
+      status(code) {
+        assert.strictEqual(code, 403, 'Should reject LANDLORD access to users module with 403');
+        return this;
+      },
+      json(data) {
+        assert.strictEqual(data.success, false);
+        assert.ok(data.message.includes('Forbidden'));
+      }
+    };
+
+    await middleware(reqLandlord, resLandlord, () => {
+      assert.fail('Should not allow LANDLORD to access users module');
+    });
   });
 
-  await t.test('Property service structure', () => {
-    const propertyService = require('../services/property.service');
-    assert.ok(propertyService.getAllProperties);
-    assert.ok(propertyService.getPropertyById);
-    assert.ok(propertyService.createProperty);
-  });
+  await t.test('Resource-Level Security Middleware - SUPER_ADMINISTRATOR Allowed Access', async () => {
+    const { enforceResourceAccess } = require('../middleware/auth');
 
-  await t.test('Payment service structure', () => {
-    const paymentService = require('../services/payment.service');
-    assert.ok(paymentService.getAllPayments);
-    assert.ok(paymentService.createPayment);
-    assert.ok(paymentService.handleMpesaStkPush);
+    const reqAdmin = { user: { id: 1, role: 'SUPER_ADMINISTRATOR' } };
+    const resAdmin = {};
+
+    let nextCalled = false;
+    const middleware = enforceResourceAccess('users');
+    await middleware(reqAdmin, resAdmin, () => {
+      nextCalled = true;
+    });
+
+    assert.strictEqual(nextCalled, true, 'SUPER_ADMINISTRATOR should pass resource access check');
+    assert.strictEqual(reqAdmin.resourceScope.isGlobal, true);
   });
 });

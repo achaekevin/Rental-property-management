@@ -5,46 +5,49 @@ const bcrypt = require('bcryptjs');
 module.exports = {
   async up(queryInterface, Sequelize) {
     // 1. Seed Default Organization
-    const [orgId] = await queryInterface.bulkInsert('organizations', [{
+    await queryInterface.bulkInsert('organizations', [{
       name: 'Default Property Management Org',
       email: 'admin@propertymanagement.com',
       phone: '0700000000',
       status: 'Active',
       createdAt: new Date(),
       updatedAt: new Date()
-    }], { returning: true });
+    }], { ignoreDuplicates: true });
 
-    // 2. Seed System Roles
+    // 2. Seed System Roles (The 4 Core Roles)
     await queryInterface.bulkInsert('roles', [
-      { name: 'SuperAdmin', description: 'System Super Administrator', isSystem: true, createdAt: new Date(), updatedAt: new Date() },
-      { name: 'PropertyManager', description: 'Property Manager', isSystem: true, createdAt: new Date(), updatedAt: new Date() },
-      { name: 'Landlord', description: 'Property Owner / Landlord', isSystem: true, createdAt: new Date(), updatedAt: new Date() },
-      { name: 'Tenant', description: 'Property Tenant', isSystem: true, createdAt: new Date(), updatedAt: new Date() },
-      { name: 'Accountant', description: 'Financial Accountant', isSystem: true, createdAt: new Date(), updatedAt: new Date() },
-      { name: 'MaintenanceStaff', description: 'Maintenance Staff', isSystem: true, createdAt: new Date(), updatedAt: new Date() }
+      { name: 'SUPER_ADMINISTRATOR', description: 'Platform-level control & administration', isSystem: true, createdAt: new Date(), updatedAt: new Date() },
+      { name: 'PROPERTY_MANAGER', description: 'Day-to-day property & operational manager', isSystem: true, createdAt: new Date(), updatedAt: new Date() },
+      { name: 'LANDLORD', description: 'Property Owner & investment performance monitor', isSystem: true, createdAt: new Date(), updatedAt: new Date() },
+      { name: 'TENANT', description: 'Property tenant self-service portal', isSystem: true, createdAt: new Date(), updatedAt: new Date() }
     ], { ignoreDuplicates: true });
 
-    // 3. Seed Basic Permissions
+    // 3. Seed Permissions Matrix
     await queryInterface.bulkInsert('permissions', [
-      { name: 'property.create', module: 'Properties', description: 'Create properties', createdAt: new Date(), updatedAt: new Date() },
-      { name: 'property.read', module: 'Properties', description: 'View properties', createdAt: new Date(), updatedAt: new Date() },
-      { name: 'property.update', module: 'Properties', description: 'Edit properties', createdAt: new Date(), updatedAt: new Date() },
-      { name: 'property.delete', module: 'Properties', description: 'Delete properties', createdAt: new Date(), updatedAt: new Date() },
-      { name: 'tenant.create', module: 'Tenants', description: 'Create tenants', createdAt: new Date(), updatedAt: new Date() },
-      { name: 'tenant.read', module: 'Tenants', description: 'View tenants', createdAt: new Date(), updatedAt: new Date() },
-      { name: 'lease.create', module: 'Leases', description: 'Create leases', createdAt: new Date(), updatedAt: new Date() },
-      { name: 'payment.create', module: 'Payments', description: 'Record payments', createdAt: new Date(), updatedAt: new Date() },
-      { name: 'maintenance.create', module: 'Maintenance', description: 'Create maintenance request', createdAt: new Date(), updatedAt: new Date() }
+      { name: 'platform.manage', module: 'System', description: 'Platform level configuration', createdAt: new Date(), updatedAt: new Date() },
+      { name: 'organization.manage', module: 'Organization', description: 'Manage organizations', createdAt: new Date(), updatedAt: new Date() },
+      { name: 'user.manage', module: 'Users', description: 'Manage system users & roles', createdAt: new Date(), updatedAt: new Date() },
+      { name: 'property.manage', module: 'Properties', description: 'Full property & unit management', createdAt: new Date(), updatedAt: new Date() },
+      { name: 'property.view', module: 'Properties', description: 'View property details', createdAt: new Date(), updatedAt: new Date() },
+      { name: 'tenant.manage', module: 'Tenants', description: 'Manage tenants & unit assignments', createdAt: new Date(), updatedAt: new Date() },
+      { name: 'tenant.view', module: 'Tenants', description: 'View tenant details', createdAt: new Date(), updatedAt: new Date() },
+      { name: 'lease.manage', module: 'Leases', description: 'Create, renew & terminate leases', createdAt: new Date(), updatedAt: new Date() },
+      { name: 'invoice.manage', module: 'Invoices', description: 'Generate & edit invoices', createdAt: new Date(), updatedAt: new Date() },
+      { name: 'payment.record', module: 'Payments', description: 'Record rent payments', createdAt: new Date(), updatedAt: new Date() },
+      { name: 'payment.pay', module: 'Payments', description: 'Pay rent via M-Pesa / Gateway', createdAt: new Date(), updatedAt: new Date() },
+      { name: 'maintenance.manage', module: 'Maintenance', description: 'Approve, assign & complete maintenance requests', createdAt: new Date(), updatedAt: new Date() },
+      { name: 'maintenance.create', module: 'Maintenance', description: 'Submit maintenance requests', createdAt: new Date(), updatedAt: new Date() },
+      { name: 'financials.view', module: 'Financials', description: 'View expected rent, net income & expenses', createdAt: new Date(), updatedAt: new Date() }
     ], { ignoreDuplicates: true });
 
-    // 4. Seed Initial SuperAdmin User
+    // 4. Seed Initial SuperAdministrator User
     const hashedPassword = await bcrypt.hash('AdminPassword123!', 10);
     await queryInterface.bulkInsert('users', [{
       organizationId: 1,
-      name: 'System Admin',
+      name: 'Super Administrator',
       email: 'admin@propertymanagement.com',
       password: hashedPassword,
-      role: 'SuperAdmin',
+      role: 'SUPER_ADMINISTRATOR',
       phone: '0700000000',
       status: 'Active',
       createdAt: new Date(),

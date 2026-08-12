@@ -38,6 +38,8 @@ app.get('/api/health', (req, res) => {
 
 // API Routes
 app.use('/api/auth', require('./routes/auth'));
+app.use('/api/users', require('./routes/users'));
+app.use('/api/roles', require('./routes/roles'));
 app.use('/api/properties', require('./routes/properties'));
 app.use('/api/units', require('./routes/units'));
 app.use('/api/tenants', require('./routes/tenants'));
@@ -69,6 +71,5 @@ if (require.main === module) {
     console.log(`Rental Property Management Backend running on port ${PORT}`);
   });
 }
-
 
 module.exports = app;

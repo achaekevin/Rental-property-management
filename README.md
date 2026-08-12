@@ -2,7 +2,7 @@
 
 ## System Overview
 
-The Rental Property Management System is a production-grade full-stack web application for property administration, tenant operations, financial accounting, and maintenance workflows. It is backed by a normalized **MySQL 8.4** relational database with **Sequelize ORM**, strict schema definitions, migrations, seeders, Role-Based Access Control (RBAC), multi-tenancy, and financial transaction integrity.
+The Rental Property Management System (Renta) is a production-grade full-stack web application for property administration, tenant operations, financial accounting, and maintenance workflows. It is backed by a normalized **MySQL 8.4** relational database with **Sequelize ORM**, strict schema definitions, migrations, seeders, Role-Based Access Control (RBAC), Granular Permission Architecture, multi-tenancy, and financial transaction integrity.
 
 ---
 
@@ -15,7 +15,7 @@ The Rental Property Management System is a production-grade full-stack web appli
 - **ORM:** Sequelize 6
 - **Authentication:** JSON Web Tokens (JWT) & bcryptjs
 - **Validation:** express-validator
-- **Security:** Helmet, express-rate-limit, CORS, parameterized queries
+- **Security:** Helmet, express-rate-limit, CORS, parameterized queries, Role & Resource Authorization
 - **Testing:** Node.js test runner (`node:test`) & Supertest
 
 ### Frontend
@@ -27,7 +27,33 @@ The Rental Property Management System is a production-grade full-stack web appli
 
 ---
 
-## Key Modules & Database Architecture
+## System Roles & Granular Permission Architecture
+
+Renta enforces a strict **Role-Level + Resource-Level Authorization System** with explicit permission guards across all REST API endpoints:
+
+### 1. Super Administrator (`SUPER_ADMINISTRATOR`)
+- **Scope:** Platform-level control across all organizations.
+- **Capabilities:** User management across all roles, organization administration, global audit logs, system configurations, and system health status.
+- **Permissions:** `user.*`, `role.*`, `system.settings.*`, `audit.view`, `property.*`, `unit.*`, `tenant.*`, `lease.*`, `invoice.*`, `payment.*`, `expense.*`, `maintenance.*`, `report.*`.
+
+### 2. Property Manager (`PROPERTY_MANAGER`)
+- **Scope:** Operational management for properties within their assigned organization.
+- **Capabilities:** Property administration, tenant onboarding, lease agreements, invoice generation, expense tracking, maintenance assignment, and operational reports.
+- **Permissions:** `property.*`, `unit.*`, `tenant.*`, `lease.*`, `invoice.*`, `payment.*`, `expense.*`, `maintenance.*`, `report.*`, `user.view`, `user.create`, `user.update`.
+
+### 3. Landlord / Property Owner (`LANDLORD`)
+- **Scope:** Investment performance monitoring for owned properties.
+- **Capabilities:** Read-only monitoring of owned properties, occupancy rates, collected rent, expenses, net income, and lease expiration alerts.
+- **Permissions:** `property.view`, `unit.view`, `tenant.view`, `lease.view`, `maintenance.view`, `expense.view`, `payment.view`, `report.view`, `report.financial`, `report.occupancy`. *(Restricted from create, update, or delete actions).*
+
+### 4. Tenant (`TENANT`)
+- **Scope:** Self-service portal scoped strictly to active lease and unit.
+- **Capabilities:** Profile management, lease document viewing, rent invoices, interactive **M-Pesa STK Push rent payments**, and maintenance request submission/tracking.
+- **Permissions:** `tenant.view`, `tenant.update`, `lease.view`, `invoice.view`, `payment.view`, `payment.create`, `maintenance.view`, `maintenance.create`, `maintenance.update`.
+
+---
+
+## Database Architecture & Key Modules
 
 1. **Authentication & RBAC:** `users`, `roles`, `permissions`, `role_permissions`, `user_organizations`, `user_sessions`, `password_reset_tokens`
 2. **Multi-Tenancy:** `organizations`
@@ -42,52 +68,3 @@ The Rental Property Management System is a production-grade full-stack web appli
 11. **Documents:** `documents`
 12. **Notifications:** `notifications`, `notification_preferences`, `announcements`, `announcement_recipients`
 13. **Auditing:** `audit_logs`
-
----
-
-## Getting Started & Installation
-
-### 1. Environment Setup
-
-Copy `.env.example` in the `backend` directory to `.env` and fill in your MySQL credentials:
-
-```bash
-cp backend/.env.example backend/.env
-```
-
-### 2. Database Migrations & Seeders
-
-Run Sequelize CLI commands inside the `backend` folder:
-
-```bash
-# Run database migrations
-npx sequelize-cli db:migrate
-
-# Seed initial system roles, permissions, organization, and admin user
-npx sequelize-cli db:seed:all
-```
-
-### 3. Running Backend Services
-
-```bash
-cd backend
-npm run dev
-```
-
-### 4. Running Integration Tests
-
-```bash
-cd backend
-npm test
-```
-
----
-
-## Final Verification Summary
-
-- [x] **Database Schema:** 40+ relational tables mapped with foreign key constraints, indexes, and precision financial DECIMAL data types.
-- [x] **Sequelize ORM:** Models and associations cleanly separated from business logic.
-- [x] **Migrations & Seeders:** Deterministic migration (`001-initial-schema.js`) and seeder (`001-initial-seed.js`).
-- [x] **Layered Architecture:** Routes → Validators → Controllers → Services → Models.
-- [x] **RBAC & Security:** Role authorization middleware, Helmet headers, rate limiting, and password hashing.
-- [x] **Testing:** Passed 100% of unit and architecture verification tests.

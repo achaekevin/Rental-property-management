@@ -1,52 +1,63 @@
 const express = require('express');
 const router = express.Router();
 const { Maintenance, Property, Unit, Tenant } = require('../models');
-const { verifyToken } = require('../middleware/auth');
+const { verifyToken, requirePermission, enforceResourceAccess } = require('../middleware/auth');
 
-// GET /api/maintenance
-router.get('/', async (req, res) => {
+router.use(verifyToken);
+router.use(enforceResourceAccess('maintenance'));
+
+router.get('/', requirePermission('maintenance.view'), async (req, res) => {
   try {
+    const where = {};
+    if (req.user.role === 'PROPERTY_MANAGER' && req.user.organizationId) {
+      where.organizationId = req.user.organizationId;
+    }
+
     const requests = await Maintenance.findAll({
+      where,
       include: [
-        { model: Property, as: 'property', attributes: ['id', 'name', 'address'] },
-        { model: Unit, as: 'unit', attributes: ['id', 'unitNumber'] },
-        { model: Tenant, as: 'tenant', attributes: ['id', 'name', 'email'] }
+        { model: Property, as: 'property', attributes: ['id', 'name'] },
+        { model: Unit, as: 'unit', attributes: ['id', 'unitNumber'] }
       ]
     });
-    const result = requests.map(r => {
-      const data = r.toJSON();
-      data._id = r.id;
-      return data;
-    });
-    res.json(result);
+    res.json({ success: true, count: requests.length, data: requests });
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    res.status(500).json({ success: false, message: err.message });
   }
 });
 
-// POST /api/maintenance
-router.post('/', verifyToken, async (req, res) => {
+router.post('/', requirePermission('maintenance.create'), async (req, res) => {
   try {
-    const maintenance = await Maintenance.create(req.body);
-    const data = maintenance.toJSON();
-    data._id = maintenance.id;
-    res.status(201).json(data);
+    if (req.user.role === 'PROPERTY_MANAGER') {
+      req.body.organizationId = req.user.organizationId;
+    }
+    const request = await Maintenance.create(req.body);
+    res.status(201).json({ success: true, message: 'Maintenance request submitted', data: request });
   } catch (err) {
-    res.status(400).json({ message: err.message });
+    res.status(400).json({ success: false, message: err.message });
   }
 });
 
-// PUT /api/maintenance/:id (Update status workflow)
-router.put('/:id', verifyToken, async (req, res) => {
+router.put('/:id/assign', requirePermission('maintenance.assign'), async (req, res) => {
   try {
-    const maintenance = await Maintenance.findByPk(req.params.id);
-    if (!maintenance) return res.status(404).json({ message: 'Maintenance request not found' });
-    await maintenance.update(req.body);
-    const data = maintenance.toJSON();
-    data._id = maintenance.id;
-    res.json(data);
+    const request = await Maintenance.findByPk(req.params.id);
+    if (!request) return res.status(404).json({ success: false, message: 'Maintenance request not found' });
+    const { assignedTo } = req.body;
+    await request.update({ assignedTo, status: 'ASSIGNED' });
+    res.json({ success: true, message: 'Maintenance task assigned successfully', data: request });
   } catch (err) {
-    res.status(400).json({ message: err.message });
+    res.status(400).json({ success: false, message: err.message });
+  }
+});
+
+router.put('/:id', requirePermission('maintenance.update'), async (req, res) => {
+  try {
+    const request = await Maintenance.findByPk(req.params.id);
+    if (!request) return res.status(404).json({ success: false, message: 'Maintenance request not found' });
+    await request.update(req.body);
+    res.json({ success: true, message: 'Maintenance request updated', data: request });
+  } catch (err) {
+    res.status(400).json({ success: false, message: err.message });
   }
 });
 
