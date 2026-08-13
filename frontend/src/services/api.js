@@ -84,5 +84,20 @@ export const markNotificationRead = (id) => api.put(`/notifications/${id}/read`)
 
 // --- Dashboard & Analytics Endpoints ---
 export const getAnalyticsStats = () => api.get('/analytics/stats');
+export const getPublicStatistics = () => api.get('/public/statistics');
+
+// --- File Upload Endpoints ---
+export const uploadSingleFile = (formData, folder = 'properties') =>
+  api.post(`/upload/single?folder=${folder}`, formData, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  });
+
+export const uploadMultipleFiles = (formData, folder = 'properties') =>
+  api.post(`/upload/multiple?folder=${folder}`, formData, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  });
+
+export const getUploadedFiles = (folder = 'properties') =>
+  api.get(`/upload/files`, { params: { folder } });
 
 export default api;

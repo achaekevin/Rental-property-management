@@ -19,6 +19,7 @@ import { setPersistence, browserLocalPersistence } from 'firebase/auth';
 import Chatbot from './components/Chatbot';
 import { AuthProvider } from './context/AuthContext';
 import { DarkModeProvider, useDarkMode } from './context/DarkModeContext';
+import LandingPage from './components/landing/LandingPage';
 
 function AppContent() {
   const { darkMode } = useDarkMode();
@@ -86,7 +87,7 @@ function AppContent() {
       <Router>
         <ErrorBoundary>
           <Routes>
-            <Route path="/" element={<Navigate to="/tenant/login" />} />
+            <Route path="/" element={<LandingPage />} />
 
             <Route path="/tenant/login" element={<TenantLogin />} />
             <Route path="/tenant/register" element={<TenantRegister />} />
