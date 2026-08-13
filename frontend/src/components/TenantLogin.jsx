@@ -10,12 +10,10 @@ import {
   CircularProgress,
   Snackbar,
   Alert,
-  useTheme,
-  useMediaQuery,
   Container
 } from "@mui/material";
 import { useNavigate } from "react-router-dom";
-import { Visibility, VisibilityOff } from "@mui/icons-material";
+import { Visibility, VisibilityOff, ArrowBack } from "@mui/icons-material";
 import api from '../services/api';
 
 const TenantLogin = () => {
@@ -67,13 +65,21 @@ const TenantLogin = () => {
         justifyContent: "center",
         alignItems: "center",
         minHeight: "100vh",
-        background: "linear-gradient(135deg, #1a237e 0%, #283593 100%)",
+        background: "linear-gradient(135deg, #0f172a 0%, #1e293b 100%)",
         padding: { xs: 2, sm: 3 }
       }}
     >
       <Container maxWidth="sm">
         <Paper elevation={6} sx={{ width: "100%", borderRadius: 3, overflow: "hidden", backgroundColor: "#ffffff" }}>
-          <Box sx={{ p: 3, background: "linear-gradient(90deg, #1a237e 0%, #283593 100%)", color: "#fff", textAlign: "center" }}>
+          <Box sx={{ p: 3, background: "linear-gradient(90deg, #1976d2 0%, #1565c0 100%)", color: "#fff", textAlign: "center", position: "relative" }}>
+            <IconButton
+              onClick={() => navigate('/')}
+              sx={{ position: 'absolute', left: 16, top: 16, color: '#fff' }}
+              title="Back to Landing Page"
+            >
+              <ArrowBack />
+            </IconButton>
+
             <Typography variant="h5" fontWeight={700}>
               Renta Property Management
             </Typography>
@@ -91,9 +97,11 @@ const TenantLogin = () => {
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
+                InputLabelProps={{ shrink: true }}
                 placeholder="Enter your email"
-                sx={{ mb: 2.5 }}
+                sx={{ mb: 3 }}
               />
+
               <TextField
                 label="Password"
                 type={showPassword ? "text" : "password"}
@@ -101,6 +109,7 @@ const TenantLogin = () => {
                 required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
+                InputLabelProps={{ shrink: true }}
                 placeholder="Enter your password"
                 sx={{ mb: 3 }}
                 InputProps={{
@@ -129,7 +138,7 @@ const TenantLogin = () => {
                 <Typography variant="body2" color="text.secondary">
                   Don't have an account?{" "}
                   <Button variant="text" size="small" onClick={() => navigate("/tenant/register")} sx={{ fontWeight: 600 }}>
-                    Register here
+                    Sign Up here
                   </Button>
                 </Typography>
               </Box>

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import {
   Box,
   Typography,
@@ -11,22 +11,10 @@ import {
   Alert,
   Paper,
   MenuItem,
-  useTheme,
-  useMediaQuery,
   Container,
-  Grid,
-  Divider,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
 } from "@mui/material";
 import { useNavigate } from "react-router-dom";
-import { Visibility, VisibilityOff } from "@mui/icons-material";
-import GoogleIcon from '@mui/icons-material/Google';
-import { setDoc, doc, collection, getDocs, updateDoc } from "firebase/firestore";
-import { auth, db } from "../firebase";
-import { useAuth } from '../context/AuthContext';
+import { Visibility, VisibilityOff, ArrowBack } from "@mui/icons-material";
 import api from '../services/api';
 
 const TenantRegister = () => {
@@ -42,8 +30,6 @@ const TenantRegister = () => {
   const [success, setSuccess] = useState("");
 
   const navigate = useNavigate();
-  const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
   const handleTogglePasswordVisibility = () => {
     setShowPassword((prev) => !prev);
@@ -94,7 +80,7 @@ const TenantRegister = () => {
         justifyContent: "center",
         alignItems: "center",
         minHeight: "100vh",
-        background: "linear-gradient(135deg, #1a237e 0%, #283593 100%)",
+        background: "linear-gradient(135deg, #0f172a 0%, #1e293b 100%)",
         padding: { xs: 2, sm: 3 },
       }}
     >
@@ -111,11 +97,20 @@ const TenantRegister = () => {
           <Box
             sx={{
               p: 3,
-              background: "linear-gradient(90deg, #1a237e 0%, #283593 100%)",
+              background: "linear-gradient(90deg, #1976d2 0%, #1565c0 100%)",
               color: "#fff",
-              textAlign: "center"
+              textAlign: "center",
+              position: "relative"
             }}
           >
+            <IconButton
+              onClick={() => navigate('/')}
+              sx={{ position: 'absolute', left: 16, top: 16, color: '#fff' }}
+              title="Back to Landing Page"
+            >
+              <ArrowBack />
+            </IconButton>
+
             <Typography variant="h5" fontWeight={700}>
               Renta Property Management
             </Typography>
@@ -132,8 +127,11 @@ const TenantRegister = () => {
                 required 
                 value={name} 
                 onChange={(e) => setName(e.target.value)} 
-                sx={{ mb: 2 }}
+                InputLabelProps={{ shrink: true }}
+                placeholder="Enter your full name"
+                sx={{ mb: 2.5 }}
               />
+
               <TextField 
                 label="Email Address" 
                 type="email" 
@@ -141,8 +139,11 @@ const TenantRegister = () => {
                 required 
                 value={email} 
                 onChange={(e) => setEmail(e.target.value)} 
-                sx={{ mb: 2 }}
+                InputLabelProps={{ shrink: true }}
+                placeholder="Enter your email address"
+                sx={{ mb: 2.5 }}
               />
+
               <TextField 
                 label="Phone Number" 
                 type="tel" 
@@ -150,7 +151,9 @@ const TenantRegister = () => {
                 required 
                 value={phone} 
                 onChange={(e) => setPhone(e.target.value)} 
-                sx={{ mb: 2 }}
+                InputLabelProps={{ shrink: true }}
+                placeholder="Enter your phone number"
+                sx={{ mb: 2.5 }}
               />
 
               {/* Core Role Selection */}
@@ -161,8 +164,9 @@ const TenantRegister = () => {
                 required
                 value={role}
                 onChange={(e) => setRole(e.target.value)}
-                sx={{ mb: 2 }}
-                helperText="Select your role in the system"
+                InputLabelProps={{ shrink: true }}
+                sx={{ mb: 2.5 }}
+                helperText="Select your role in the property system"
               >
                 <MenuItem value="SUPER_ADMINISTRATOR">Super Administrator (Platform Level)</MenuItem>
                 <MenuItem value="PROPERTY_MANAGER">Property Manager (Operational Control)</MenuItem>
@@ -177,7 +181,9 @@ const TenantRegister = () => {
                 required 
                 value={password} 
                 onChange={(e) => setPassword(e.target.value)} 
-                sx={{ mb: 2 }}
+                InputLabelProps={{ shrink: true }}
+                placeholder="Create a password"
+                sx={{ mb: 2.5 }}
                 InputProps={{
                   endAdornment: (
                     <InputAdornment position="end">
@@ -188,6 +194,7 @@ const TenantRegister = () => {
                   ),
                 }}
               />
+
               <TextField 
                 label="Confirm Password" 
                 type={showPassword ? "text" : "password"} 
@@ -195,6 +202,8 @@ const TenantRegister = () => {
                 required 
                 value={confirmPassword} 
                 onChange={(e) => setConfirmPassword(e.target.value)} 
+                InputLabelProps={{ shrink: true }}
+                placeholder="Confirm your password"
                 sx={{ mb: 3 }}
               />
 
