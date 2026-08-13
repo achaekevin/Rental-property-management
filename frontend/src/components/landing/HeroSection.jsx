@@ -129,9 +129,9 @@ const HeroSection = () => {
         <Box
           sx={{
             textAlign: 'center',
-            maxWidth: 900,
+            maxWidth: 820,
             mx: 'auto',
-            p: { xs: 3, sm: 5 },
+            p: { xs: 2.5, sm: 4 },
             borderRadius: 4,
             backdropFilter: 'blur(10px)',
             backgroundColor: 'rgba(11, 15, 25, 0.45)',
@@ -141,16 +141,17 @@ const HeroSection = () => {
         >
           {/* Animated Category Badge - Pure White */}
           <Chip
-            icon={<VerifiedUserOutlined style={{ fontSize: 16, color: '#ffffff' }} />}
+            icon={<VerifiedUserOutlined style={{ fontSize: 15, color: '#ffffff' }} />}
             label={slides[activeIndex].category}
             variant="outlined"
             size="medium"
             sx={{
-              mb: 3,
+              mb: 2.5,
               fontWeight: 700,
-              letterSpacing: '1.2px',
-              px: 1.5,
-              py: 0.8,
+              letterSpacing: '1px',
+              px: 1.2,
+              py: 0.5,
+              fontSize: '0.78rem',
               borderColor: 'rgba(255, 255, 255, 0.5)',
               backgroundColor: 'rgba(15, 23, 42, 0.75)',
               backdropFilter: 'blur(12px)',
@@ -158,17 +159,17 @@ const HeroSection = () => {
             }}
           />
 
-          {/* ANIMATED HEADLINE - PURE WHITE TYPOGRAPHY */}
+          {/* ANIMATED HEADLINE - BALANCED FONT SIZE & ALIGNMENT */}
           <Typography
             variant="h1"
             sx={{
-              fontSize: { xs: '2.3rem', sm: '3.4rem', md: '4.4rem' },
+              fontSize: { xs: '1.75rem', sm: '2.5rem', md: '3.1rem' },
               fontWeight: 800,
-              lineHeight: 1.15,
-              letterSpacing: '-1.5px',
+              lineHeight: 1.25,
+              letterSpacing: '-0.8px',
               color: '#ffffff',
-              mb: 2.5,
-              textShadow: '0 4px 18px rgba(0,0,0,0.8)',
+              mb: 2,
+              textShadow: '0 3px 14px rgba(0,0,0,0.8)',
             }}
           >
             Everything you need to manage your{' '}
@@ -179,8 +180,8 @@ const HeroSection = () => {
               sx={{
                 display: 'inline-block',
                 color: '#ffffff',
-                borderBottom: '3px solid #ffffff',
-                pb: 0.5,
+                borderBottom: '2.5px solid #ffffff',
+                pb: 0.2,
               }}
             >
               {slides[activeIndex].word}
@@ -188,19 +189,19 @@ const HeroSection = () => {
             and rent in one place.
           </Typography>
 
-          {/* ANIMATED SUBTITLE - PURE WHITE */}
+          {/* ANIMATED SUBTITLE - REALIGNED & BALANCED */}
           <Typography
             key={`sub-${activeIndex}`}
             className="word-anim"
             variant="body1"
             sx={{
-              fontSize: { xs: '1.05rem', sm: '1.25rem' },
+              fontSize: { xs: '0.95rem', sm: '1.1rem' },
               color: '#ffffff',
               lineHeight: 1.6,
-              maxWidth: 760,
+              maxWidth: 660,
               mx: 'auto',
-              mb: 4.5,
-              textShadow: '0 2px 10px rgba(0,0,0,0.9)',
+              mb: 3.5,
+              textShadow: '0 2px 8px rgba(0,0,0,0.9)',
             }}
           >
             {slides[activeIndex].subtitle}
