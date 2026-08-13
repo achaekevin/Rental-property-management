@@ -606,73 +606,100 @@ const Dashboard = () => {
                   </Box>
 
                   <Grid container spacing={3}>
-                    {availableProperties.map((prop) => (
-                      <Grid item xs={12} md={6} key={prop.id}>
-                        <Paper variant="outlined" sx={{ p: 2.5, borderRadius: 3, bgcolor: '#f8fafc' }}>
-                          <Box display="flex" justifyContent="space-between" alignItems="flex-start" mb={1.5}>
-                            <Box>
-                              <Typography variant="h6" fontWeight={700} color="text.primary">
-                                {prop.name}
-                              </Typography>
-                              <Typography variant="caption" color="text.secondary" display="block">
-                                📍 {prop.address}
-                              </Typography>
-                            </Box>
-                            <Chip label={`KSh ${(prop.rentAmount || 25000).toLocaleString()}/mo`} color="primary" size="small" sx={{ fontWeight: 700 }} />
-                          </Box>
-
-                          <Typography variant="caption" fontWeight={700} color="text.secondary" display="block" mb={1}>
-                            Vacant Units Available for Instant Booking:
-                          </Typography>
-
-                          <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
-                            {(prop.units || [
-                              { id: 1, unitNumber: 'Unit A-101', status: 'VACANT', rent: prop.rentAmount || 25000 },
-                              { id: 2, unitNumber: 'Unit A-102', status: 'OCCUPIED', rent: prop.rentAmount || 25000 },
-                              { id: 3, unitNumber: 'Unit A-103', status: 'VACANT', rent: prop.rentAmount || 25000 }
-                            ]).map((uItem) => {
-                              const isVacant = uItem.status === 'VACANT' || !uItem.occupied;
-                              return (
-                                <Box 
-                                  key={uItem.id || uItem.unitNumber}
-                                  sx={{
-                                    p: 1,
-                                    borderRadius: 2,
-                                    bgcolor: isVacant ? '#ffffff' : '#f1f5f9',
-                                    border: `1px solid ${isVacant ? '#22c55e' : '#cbd5e1'}`,
-                                    minWidth: 120,
-                                    textAlign: 'center'
-                                  }}
-                                >
-                                  <Typography variant="caption" fontWeight={700} display="block">
-                                    {uItem.unitNumber}
+                    {availableProperties.map((prop) => {
+                      const propImg = prop.image || 'https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?auto=format&fit=crop&w=800&q=80';
+                      return (
+                        <Grid item xs={12} md={6} key={prop.id}>
+                          <Paper variant="outlined" sx={{ borderRadius: 3, bgcolor: '#ffffff', overflow: 'hidden' }}>
+                            <Box sx={{ position: 'relative', height: 140, width: '100%' }}>
+                              <Box
+                                component="img"
+                                src={propImg}
+                                alt={prop.name}
+                                sx={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                              />
+                              <Box
+                                sx={{
+                                  position: 'absolute',
+                                  top: 0,
+                                  left: 0,
+                                  right: 0,
+                                  bottom: 0,
+                                  background: 'linear-gradient(180deg, rgba(0,0,0,0.1) 0%, rgba(0,0,0,0.7) 100%)',
+                                  p: 1.5,
+                                  display: 'flex',
+                                  alignItems: 'flex-end',
+                                  justify: 'space-between',
+                                  color: '#fff'
+                                }}
+                              >
+                                <Box>
+                                  <Typography variant="subtitle1" fontWeight={700} color="#ffffff">
+                                    {prop.name}
                                   </Typography>
-                                  <Chip 
-                                    label={isVacant ? 'VACANT' : 'OCCUPIED'} 
-                                    color={isVacant ? 'success' : 'default'} 
-                                    size="small" 
-                                    sx={{ height: 18, fontSize: '0.62rem', fontWeight: 800, my: 0.5 }}
-                                  />
-                                  {isVacant && (
-                                    <Button
-                                      fullWidth
-                                      size="small"
-                                      variant="contained"
-                                      color="success"
-                                      startIcon={<ShoppingCartIcon style={{ fontSize: 13 }} />}
-                                      onClick={() => handleBookUnit(prop, uItem)}
-                                      sx={{ fontSize: '0.68rem', py: 0.2, fontWeight: 700, mt: 0.5 }}
-                                    >
-                                      Book Unit
-                                    </Button>
-                                  )}
+                                  <Typography variant="caption" sx={{ opacity: 0.9 }}>
+                                    📍 {prop.address}
+                                  </Typography>
                                 </Box>
-                              );
-                            })}
-                          </Stack>
-                        </Paper>
-                      </Grid>
-                    ))}
+                                <Chip label={`KSh ${(prop.rentAmount || 25000).toLocaleString()}/mo`} color="primary" size="small" sx={{ fontWeight: 800 }} />
+                              </Box>
+                            </Box>
+
+                            <Box p={2}>
+                              <Typography variant="caption" fontWeight={700} color="text.secondary" display="block" mb={1}>
+                                Vacant Units Available for Instant Booking:
+                              </Typography>
+
+                              <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
+                                {(prop.units || [
+                                  { id: 1, unitNumber: 'Unit A-101', status: 'VACANT', rent: prop.rentAmount || 25000 },
+                                  { id: 2, unitNumber: 'Unit A-102', status: 'OCCUPIED', rent: prop.rentAmount || 25000 },
+                                  { id: 3, unitNumber: 'Unit A-103', status: 'VACANT', rent: prop.rentAmount || 25000 }
+                                ]).map((uItem) => {
+                                  const isVacant = uItem.status === 'VACANT' || !uItem.occupied;
+                                  return (
+                                    <Box 
+                                      key={uItem.id || uItem.unitNumber}
+                                      sx={{
+                                        p: 1,
+                                        borderRadius: 2,
+                                        bgcolor: isVacant ? '#f0fdf4' : '#f1f5f9',
+                                        border: `1px solid ${isVacant ? '#22c55e' : '#cbd5e1'}`,
+                                        minWidth: 110,
+                                        textAlign: 'center'
+                                      }}
+                                    >
+                                      <Typography variant="caption" fontWeight={700} display="block">
+                                        {uItem.unitNumber}
+                                      </Typography>
+                                      <Chip 
+                                        label={isVacant ? 'VACANT' : 'OCCUPIED'} 
+                                        color={isVacant ? 'success' : 'default'} 
+                                        size="small" 
+                                        sx={{ height: 18, fontSize: '0.62rem', fontWeight: 800, my: 0.5 }}
+                                      />
+                                      {isVacant && (
+                                        <Button
+                                          fullWidth
+                                          size="small"
+                                          variant="contained"
+                                          color="success"
+                                          startIcon={<ShoppingCartIcon style={{ fontSize: 13 }} />}
+                                          onClick={() => handleBookUnit(prop, uItem)}
+                                          sx={{ fontSize: '0.68rem', py: 0.2, fontWeight: 700, mt: 0.5 }}
+                                        >
+                                          Book Unit
+                                        </Button>
+                                      )}
+                                    </Box>
+                                  );
+                                })}
+                              </Stack>
+                            </Box>
+                          </Paper>
+                        </Grid>
+                      );
+                    })}
                   </Grid>
                 </Card>
               </Box>
