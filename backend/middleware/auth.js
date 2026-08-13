@@ -42,6 +42,8 @@ const ROLE_PERMISSIONS = {
     'report.view', 'report.financial', 'report.occupancy'
   ],
   TENANT: [
+    'property.view',
+    'unit.view',
     'tenant.view', 'tenant.update',
     'lease.view',
     'invoice.view',

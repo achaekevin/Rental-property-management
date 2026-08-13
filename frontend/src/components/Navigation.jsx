@@ -129,7 +129,7 @@ const Navigation = () => {
         return [
           { text: "Tenant Dashboard", path: "/dashboard", icon: <DashboardIcon /> },
           { text: "Available Properties", path: "/properties", icon: <PropertiesIcon /> },
-          { text: "M-Pesa Payments", path: "/payments", icon: <PaymentsIcon /> },
+          { text: "Payments", path: "/payments", icon: <PaymentsIcon /> },
           { text: "Maintenance Tickets", path: "/maintenance", icon: <MaintenanceIcon /> },
           ...commonItems
         ];

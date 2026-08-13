@@ -2,9 +2,7 @@ const { Property, Unit, Tenant, Building, Floor } = require('../models');
 
 class PropertyService {
   async getAllProperties(organizationId) {
-    const where = organizationId ? { organizationId } : {};
     return await Property.findAll({
-      where,
       include: [
         { model: Unit, as: 'unitList' },
         { model: Building, as: 'buildings' }
@@ -13,11 +11,7 @@ class PropertyService {
   }
 
   async getPropertyById(id, organizationId) {
-    const where = { id };
-    if (organizationId) where.organizationId = organizationId;
-
-    const property = await Property.findOne({
-      where,
+    const property = await Property.findByPk(id, {
       include: [
         { model: Unit, as: 'unitList' },
         { model: Tenant, as: 'tenants' },
@@ -34,12 +28,12 @@ class PropertyService {
   }
 
   async updateProperty(id, data, organizationId) {
-    const property = await this.getPropertyById(id, organizationId);
+    const property = await this.getPropertyById(id);
     return await property.update(data);
   }
 
   async deleteProperty(id, organizationId) {
-    const property = await this.getPropertyById(id, organizationId);
+    const property = await this.getPropertyById(id);
     await property.destroy();
     return true;
   }

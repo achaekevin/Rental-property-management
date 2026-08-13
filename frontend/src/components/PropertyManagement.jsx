@@ -15,8 +15,12 @@ import {
   CircularProgress,
   Container,
   Stack,
+  MenuItem,
+  Select,
+  FormControl,
+  InputLabel
 } from '@mui/material';
-import { Add, Search, Apartment, Home, Hotel, MeetingRoom, ShoppingCart } from '@mui/icons-material';
+import { Add, Search, Apartment, Home, Hotel, MeetingRoom, ShoppingCart, Person } from '@mui/icons-material';
 import Navigation from './Navigation';
 import useAutoLogout from '../hooks/useAutoLogout';
 import { getProperties, createProperty } from '../services/api';
@@ -30,6 +34,7 @@ const PropertyManagement = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const userRole = localStorage.getItem('userRole') || 'SUPER_ADMINISTRATOR';
+  const currentUserEmail = localStorage.getItem('userEmail') || (userRole === 'LANDLORD' ? 'propertyowner@renthive.com' : 'superadmin@renthive.com');
 
   // Add Property Form State
   const [propertyName, setPropertyName] = useState('');
@@ -37,6 +42,7 @@ const PropertyManagement = () => {
   const [totalUnits, setTotalUnits] = useState(10);
   const [rentAmount, setRentAmount] = useState(25000);
   const [unitPrefix, setUnitPrefix] = useState('A');
+  const [ownerEmail, setOwnerEmail] = useState('propertyowner@renthive.com');
   const [amenities, setAmenities] = useState('Parking, Security, Water, Wi-Fi');
 
   useAutoLogout();
@@ -58,7 +64,6 @@ const PropertyManagement = () => {
 
       if (local) {
         const parsed = JSON.parse(local);
-        // Merge without duplicates
         const existingIds = new Set(combined.map(p => p.id));
         parsed.forEach(p => {
           if (!existingIds.has(p.id)) {
@@ -75,6 +80,8 @@ const PropertyManagement = () => {
             address: 'Westlands Commercial District, Nairobi',
             totalUnits: 12,
             rentAmount: 35000,
+            ownerEmail: 'propertyowner@renthive.com',
+            ownerName: 'Property Owner',
             status: 'Active',
             units: [
               { id: 101, unitNumber: 'A-101', status: 'VACANT', rent: 35000 },
@@ -89,6 +96,8 @@ const PropertyManagement = () => {
             address: 'Karen Heights Ridge, Nairobi',
             totalUnits: 8,
             rentAmount: 45000,
+            ownerEmail: 'propertyowner@renthive.com',
+            ownerName: 'Property Owner',
             status: 'Active',
             units: [
               { id: 201, unitNumber: 'T-201', status: 'VACANT', rent: 45000 },
@@ -107,7 +116,7 @@ const PropertyManagement = () => {
     }
   };
 
-  // Add Property Submission (Super Admin & Property Manager)
+  // Add Property Submission (Super Admin, Property Manager & Landlords)
   const handleAddProperty = async (e) => {
     e.preventDefault();
     if (!propertyName || !propertyAddress) return;
@@ -132,12 +141,13 @@ const PropertyManagement = () => {
         address: propertyAddress,
         totalUnits: parseInt(totalUnits, 10),
         rentAmount: parseFloat(rentAmount),
+        ownerEmail: ownerEmail || currentUserEmail,
+        ownerName: 'Property Owner',
         amenities: amenities.split(',').map((a) => a.trim()),
         status: 'Active',
         units: generatedUnits
       };
 
-      // Try API call
       try {
         await createProperty(newProp);
       } catch (err) {}
@@ -194,11 +204,11 @@ const PropertyManagement = () => {
                 Properties &amp; Occupancy Directory
               </Typography>
               <Typography variant="subtitle1" color="text.secondary">
-                {properties.length} active system properties • Visible to all system users &amp; tenants
+                {properties.length} active system properties • Registered property owners get real-time booking alerts
               </Typography>
             </Box>
 
-            {(userRole === 'SUPER_ADMINISTRATOR' || userRole === 'PROPERTY_MANAGER') && (
+            {(userRole === 'SUPER_ADMINISTRATOR' || userRole === 'PROPERTY_MANAGER' || userRole === 'LANDLORD') && (
               <Button 
                 variant="contained" 
                 color="primary"
@@ -206,7 +216,7 @@ const PropertyManagement = () => {
                 onClick={() => setOpenDialog(true)} 
                 sx={{ textTransform: 'none', borderRadius: 2, fontWeight: 700, px: 3, py: 1.2 }}
               >
-                Add New Property
+                Register New Property
               </Button>
             )}
           </Box>
@@ -256,7 +266,7 @@ const PropertyManagement = () => {
             <TextField
               fullWidth
               size="small"
-              placeholder="Search properties by name or address..."
+              placeholder="Search properties by name, address, or owner..."
               value={searchText}
               onChange={(e) => setSearchText(e.target.value)}
               InputProps={{
@@ -265,7 +275,7 @@ const PropertyManagement = () => {
             />
           </Box>
 
-          {/* Property List with Unit Occupancy Status */}
+          {/* Property List */}
           {loading ? (
             <Box display="flex" justifyContent="center" py={6}>
               <CircularProgress />
@@ -280,8 +290,11 @@ const PropertyManagement = () => {
                         <Typography variant="h5" fontWeight={700} color="primary.main">
                           {property.name}
                         </Typography>
-                        <Typography variant="body2" color="text.secondary">
+                        <Typography variant="body2" color="text.secondary" mb={0.5}>
                           📍 {property.address}
+                        </Typography>
+                        <Typography variant="caption" color="text.secondary" fontWeight={600} display="block">
+                          👤 Owner: {property.ownerEmail || 'propertyowner@renthive.com'}
                         </Typography>
                       </Box>
                       <Box textAlign="right">
@@ -355,9 +368,9 @@ const PropertyManagement = () => {
             </Grid>
           )}
 
-          {/* ADD PROPERTY DIALOG FOR SUPER ADMIN & PROPERTY MANAGER */}
+          {/* REGISTER PROPERTY DIALOG */}
           <Dialog open={openDialog} onClose={() => setOpenDialog(false)} maxWidth="sm" fullWidth>
-            <DialogTitle fontWeight={700}>Add New Property to System</DialogTitle>
+            <DialogTitle fontWeight={700}>Register New Property &amp; Assign Owner</DialogTitle>
             <form onSubmit={handleAddProperty}>
               <DialogContent>
                 <Stack spacing={2} pt={1}>
@@ -365,7 +378,7 @@ const PropertyManagement = () => {
                     label="Property Name"
                     fullWidth
                     required
-                    placeholder="e.g. Renta Luxury High-Rise"
+                    placeholder="e.g. Renta Executive Villas"
                     value={propertyName}
                     onChange={(e) => setPropertyName(e.target.value)}
                   />
@@ -373,9 +386,18 @@ const PropertyManagement = () => {
                     label="Property Address / Location"
                     fullWidth
                     required
-                    placeholder="e.g. Westlands, Nairobi"
+                    placeholder="e.g. Kilimani, Nairobi"
                     value={propertyAddress}
                     onChange={(e) => setPropertyAddress(e.target.value)}
+                  />
+                  <TextField
+                    label="Assigned Property Owner Email"
+                    fullWidth
+                    required
+                    placeholder="e.g. propertyowner@renthive.com"
+                    value={ownerEmail}
+                    onChange={(e) => setOwnerEmail(e.target.value)}
+                    helperText="Owner receives real-time booking alerts when tenants pay for units"
                   />
                   <Grid container spacing={2}>
                     <Grid item xs={6}>
@@ -402,7 +424,7 @@ const PropertyManagement = () => {
                   <TextField
                     label="Unit Prefix Code"
                     fullWidth
-                    placeholder="e.g. A or T (generates A-101, A-102...)"
+                    placeholder="e.g. V or A (generates V-101, V-102...)"
                     value={unitPrefix}
                     onChange={(e) => setUnitPrefix(e.target.value)}
                   />
@@ -417,7 +439,7 @@ const PropertyManagement = () => {
               <DialogActions sx={{ p: 3 }}>
                 <Button onClick={() => setOpenDialog(false)}>Cancel</Button>
                 <Button type="submit" variant="contained" disabled={saving}>
-                  {saving ? 'Adding Property...' : 'Save & Create Units'}
+                  {saving ? 'Registering Property...' : 'Save & Assign Owner'}
                 </Button>
               </DialogActions>
             </form>

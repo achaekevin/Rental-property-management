@@ -5,28 +5,81 @@ const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 const path = require('path');
 const { sequelize } = require('./models');
+const { sanitizeInputs, handleMalformedPayload } = require('./middleware/sanitize');
 
 const app = express();
 
-// Security Middlewares
+// Disable Powered-By Header to prevent server fingerprinting
+app.disable('x-powered-by');
+
+// 1. Enhanced Helmet Security Headers & HSTS Enforcement
 app.use(helmet({
-  crossOriginResourcePolicy: { policy: "cross-origin" }
+  crossOriginResourcePolicy: { policy: "cross-origin" },
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      scriptSrc: ["'self'", "'unsafe-inline'"],
+      styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
+      fontSrc: ["'self'", "https://fonts.gstatic.com"],
+      imgSrc: ["'self'", "data:", "blob:", "https:"],
+      connectSrc: ["'self'", "http:", "https:"],
+    },
+  },
+  hsts: {
+    maxAge: 31536000,
+    includeSubDomains: true,
+    preload: true
+  },
+  frameguard: { action: 'deny' },
+  noSniff: true,
+  xssFilter: true
 }));
 
-const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
+// 2. Global Rate Limiter (Bot & DDoS Protection)
+const globalLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
   max: 300,
-  message: { success: false, message: 'Too many requests from this IP, please try again later.' }
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { success: false, message: 'Too many requests from this IP address, please try again later.' }
 });
-app.use(limiter);
+app.use(globalLimiter);
 
-// Standard Middlewares
-app.use(cors());
-app.use(express.json({ limit: '10mb' }));
-app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+// 3. Strict Auth Endpoint Rate Limiter (Brute-Force & Bot Protection)
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 15, // Max 15 login/register attempts per IP
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { success: false, message: 'Too many authentication attempts. Please try again after 15 minutes.' }
+});
+app.use('/api/auth/login', authLimiter);
+app.use('/api/auth/register', authLimiter);
 
-// Static Uploads Directory Middleware
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+// 4. CORS Security Configuration
+app.use(cors({
+  origin: process.env.ALLOWED_ORIGINS ? process.env.ALLOWED_ORIGINS.split(',') : '*',
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
+}));
+
+// 5. Restrict JSON Payload Size (Field Tampering, Oversized & Malformed Payload Prevention)
+app.use(express.json({ limit: '1mb' }));
+app.use(express.urlencoded({ extended: true, limit: '1mb' }));
+
+// 6. Handle Malformed JSON & Oversized Payload Errors
+app.use(handleMalformedPayload);
+
+// 7. Global Input Sanitization Middleware (XSS, Null Bytes & Script Injection Filtering)
+app.use(sanitizeInputs);
+
+// 8. Static Uploads Directory Middleware with Header Controls
+app.use('/uploads', express.static(path.join(__dirname, 'uploads'), {
+  setHeaders: (res) => {
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    res.setHeader('Cache-Control', 'public, max-age=31536000');
+  }
+}));
 
 // Database Connection Authentication
 sequelize.authenticate()
@@ -39,7 +92,12 @@ sequelize.authenticate()
 
 // Health Check Endpoint
 app.get('/api/health', (req, res) => {
-  res.json({ status: 'UP', service: 'Rental Property Management Backend API', timestamp: new Date() });
+  res.json({ 
+    status: 'UP', 
+    service: 'Rental Property Management Backend API', 
+    security: 'INPUT_SANITIZED_ENFORCED',
+    timestamp: new Date() 
+  });
 });
 
 // API Routes
@@ -63,7 +121,7 @@ app.use((req, res) => {
   res.status(404).json({ success: false, message: `Route ${req.originalUrl} not found` });
 });
 
-// Centralized Error Handling Middleware
+// Centralized Error Handling Middleware (Trim Stack Traces in Production)
 app.use((err, req, res, next) => {
   console.error('Unhandled Server Error:', err.stack);
   res.status(err.status || 500).json({
