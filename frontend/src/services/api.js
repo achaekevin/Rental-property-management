@@ -40,6 +40,12 @@ export const loginUser = (credentials) => api.post('/auth/login', credentials);
 export const registerUser = (userData) => api.post('/auth/register', userData);
 export const getCurrentUser = () => api.get('/auth/me');
 
+// --- User Management Endpoints ---
+export const getUsers = () => api.get('/users');
+export const createUser = (data) => api.post('/users', data);
+export const updateUser = (id, data) => api.patch(`/users/${id}`, data);
+export const deleteUser = (id) => api.delete(`/users/${id}`);
+
 // --- Property Endpoints ---
 export const getProperties = () => api.get('/properties');
 export const getPropertyById = (id) => api.get(`/properties/${id}`);
@@ -84,6 +90,7 @@ export const markNotificationRead = (id) => api.put(`/notifications/${id}/read`)
 
 // --- Dashboard & Analytics Endpoints ---
 export const getAnalyticsStats = () => api.get('/analytics/stats');
+export const getAuditLogs = () => api.get('/analytics/audit-logs');
 export const getPublicStatistics = () => api.get('/public/statistics');
 
 // --- File Upload Endpoints ---
