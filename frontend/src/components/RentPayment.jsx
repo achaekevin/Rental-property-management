@@ -64,9 +64,23 @@ const RentPayment = () => {
   const [tenantName, setTenantName] = useState(localStorage.getItem('userName') || 'Tenant User');
   const [propertyName, setPropertyName] = useState('');
   const [unit, setUnit] = useState('');
-  const [amount, setAmount] = useState('');
+  
+  // Itemized Rent Billing Engine State
+  const [baseRent, setBaseRent] = useState(20000);
+  const [serviceCharge, setServiceCharge] = useState(2000);
+  const [waterFee, setWaterFee] = useState(500);
+  const [garbageFee, setGarbageFee] = useState(1000);
+  const [parkingFee, setParkingFee] = useState(1500);
+  const [amount, setAmount] = useState(25000);
+
   const [saving, setSaving] = useState(false);
   const [lastPayment, setLastPayment] = useState(null);
+
+  // Auto calculate total whenever itemized breakdown changes
+  useEffect(() => {
+    const total = (parseFloat(baseRent) || 0) + (parseFloat(serviceCharge) || 0) + (parseFloat(waterFee) || 0) + (parseFloat(garbageFee) || 0) + (parseFloat(parkingFee) || 0);
+    setAmount(total);
+  }, [baseRent, serviceCharge, waterFee, garbageFee, parkingFee]);
 
   // Payment Method Input Fields & Strict Validation
   const [mpesaPhone, setMpesaPhone] = useState('0712345678');

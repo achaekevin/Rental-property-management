@@ -99,6 +99,8 @@ const Navigation = () => {
           { text: "Platform Dashboard", path: "/dashboard", icon: <DashboardIcon /> },
           { text: "All Properties", path: "/properties", icon: <PropertiesIcon /> },
           { text: "Tenants Directory", path: "/tenants", icon: <TenantsIcon /> },
+          { text: "Rental Applications", path: "/applications", icon: <ReportsIcon /> },
+          { text: "Lease Management", path: "/leases", icon: <ReportsIcon /> },
           { text: "Rent Payments", path: "/payments", icon: <PaymentsIcon /> },
           { text: "Maintenance Log", path: "/maintenance", icon: <MaintenanceIcon /> },
           { text: "Reports & Analytics", path: "/reports", icon: <ReportsIcon /> },
@@ -108,7 +110,9 @@ const Navigation = () => {
         return [
           { text: "Operations Dashboard", path: "/dashboard", icon: <DashboardIcon /> },
           { text: "Managed Properties", path: "/properties", icon: <PropertiesIcon /> },
-          { text: "Tenants & Leases", path: "/tenants", icon: <TenantsIcon /> },
+          { text: "Tenants Directory", path: "/tenants", icon: <TenantsIcon /> },
+          { text: "Rental Applications", path: "/applications", icon: <ReportsIcon /> },
+          { text: "Lease Management", path: "/leases", icon: <ReportsIcon /> },
           { text: "Rent Payments", path: "/payments", icon: <PaymentsIcon /> },
           { text: "Maintenance Requests", path: "/maintenance", icon: <MaintenanceIcon /> },
           { text: "Financial Reports", path: "/reports", icon: <ReportsIcon /> },
@@ -119,6 +123,8 @@ const Navigation = () => {
           { text: "Investment Dashboard", path: "/dashboard", icon: <DashboardIcon /> },
           { text: "My Properties", path: "/properties", icon: <PropertiesIcon /> },
           { text: "Tenants Overview", path: "/tenants", icon: <TenantsIcon /> },
+          { text: "Rental Applications", path: "/applications", icon: <ReportsIcon /> },
+          { text: "Lease Management", path: "/leases", icon: <ReportsIcon /> },
           { text: "Financial Records", path: "/payments", icon: <PaymentsIcon /> },
           { text: "Maintenance Log", path: "/maintenance", icon: <MaintenanceIcon /> },
           { text: "Income Reports", path: "/reports", icon: <ReportsIcon /> },
@@ -129,6 +135,8 @@ const Navigation = () => {
         return [
           { text: "Tenant Dashboard", path: "/dashboard", icon: <DashboardIcon /> },
           { text: "Available Properties", path: "/properties", icon: <PropertiesIcon /> },
+          { text: "Rental Application", path: "/applications", icon: <ReportsIcon /> },
+          { text: "My Lease Agreement", path: "/leases", icon: <ReportsIcon /> },
           { text: "Payments", path: "/payments", icon: <PaymentsIcon /> },
           { text: "Maintenance Tickets", path: "/maintenance", icon: <MaintenanceIcon /> },
           ...commonItems

@@ -52,8 +52,8 @@ const Unit = sequelize.define('Unit', {
     defaultValue: 0.00
   },
   status: {
-    type: DataTypes.ENUM('AVAILABLE', 'OCCUPIED', 'RESERVED', 'UNDER_MAINTENANCE'),
-    defaultValue: 'AVAILABLE'
+    type: DataTypes.ENUM('VACANT', 'RESERVED', 'OCCUPIED', 'MAINTENANCE', 'UNAVAILABLE'),
+    defaultValue: 'VACANT'
   },
   amenities: {
     type: DataTypes.JSON,

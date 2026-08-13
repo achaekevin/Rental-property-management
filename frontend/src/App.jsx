@@ -4,6 +4,8 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import Dashboard from './components/Dashboard';
 import PropertyManagement from './components/PropertyManagement';
 import TenantManagement from './components/TenantManagement';
+import TenantApplications from './components/TenantApplications';
+import LeaseManagement from './components/LeaseManagement';
 import RentPayment from './components/RentPayment';
 import MaintenanceRequests from './components/MaintenanceRequests';
 import ReportsAnalytics from './components/ReportsAnalytics';
@@ -126,6 +128,24 @@ function AppContent() {
               element={
                 <AdminRoute userRole={userRole}>
                   <TenantManagement />
+                  {isAuthenticated && <Chatbot />}
+                </AdminRoute>
+              }
+            />
+            <Route
+              path="/applications"
+              element={
+                <AdminRoute userRole={userRole}>
+                  <TenantApplications />
+                  {isAuthenticated && <Chatbot />}
+                </AdminRoute>
+              }
+            />
+            <Route
+              path="/leases"
+              element={
+                <AdminRoute userRole={userRole}>
+                  <LeaseManagement />
                   {isAuthenticated && <Chatbot />}
                 </AdminRoute>
               }
