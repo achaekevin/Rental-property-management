@@ -208,6 +208,46 @@ const RentPayment = () => {
       setLastPayment(completedPayment);
       setRows((prev) => [completedPayment, ...prev]);
 
+      // 1. Save to system_payments
+      try {
+        const sysPayments = JSON.parse(localStorage.getItem('system_payments') || '[]');
+        sysPayments.unshift(completedPayment);
+        localStorage.setItem('system_payments', JSON.stringify(sysPayments));
+
+        // 2. Save to booking_notifications
+        const sysNotices = JSON.parse(localStorage.getItem('booking_notifications') || '[]');
+        sysNotices.unshift({
+          id: Date.now(),
+          text: `🎉 New Unit Booking: Tenant ${completedPayment.tenant} booked Unit ${completedPayment.unit} at ${completedPayment.property}`,
+          time: 'Just now',
+          amount: `KSh ${completedPayment.amount.toLocaleString()}`,
+          numericAmount: completedPayment.amount,
+          property: completedPayment.property,
+          unit: completedPayment.unit,
+          tenant: completedPayment.tenant
+        });
+        localStorage.setItem('booking_notifications', JSON.stringify(sysNotices));
+
+        // 3. Mark unit as OCCUPIED in custom_properties
+        const customProps = JSON.parse(localStorage.getItem('custom_properties') || '[]');
+        customProps.forEach(p => {
+          if (p.name === completedPayment.property) {
+            if (p.units) {
+              p.units.forEach(u => {
+                if (u.unitNumber === completedPayment.unit) {
+                  u.status = 'OCCUPIED';
+                  u.tenantName = completedPayment.tenant;
+                  u.rent = completedPayment.amount;
+                }
+              });
+            }
+          }
+        });
+        localStorage.setItem('custom_properties', JSON.stringify(customProps));
+      } catch (e) {
+        console.error('LocalStorage sync error:', e);
+      }
+
       showNotice(`Payment of KSh ${parseFloat(amount).toLocaleString()} processed successfully via ${paymentMethod}!`, 'success');
       setOpenDialog(false);
 

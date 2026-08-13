@@ -449,54 +449,62 @@ const Dashboard = () => {
             )}
 
             {/* 3. LANDLORD DASHBOARD */}
-            {role === 'LANDLORD' && (
-              <Box>
-                <Alert severity="info" sx={{ mb: 3 }}>
-                  Landlord Investment View: Performance analytics for owned properties. Day-to-day operations are managed by your assigned Property Manager.
-                </Alert>
+            {role === 'LANDLORD' && (() => {
+              const sysPayments = JSON.parse(localStorage.getItem('system_payments') || '[]');
+              const sysNotices = JSON.parse(localStorage.getItem('booking_notifications') || '[]');
+              const totalCollected = sysPayments.reduce((acc, p) => acc + (parseFloat(p.amount) || 0), 0);
+              const displayCollected = totalCollected > 0 ? totalCollected : (metrics.collectedRent || 380000);
+              const displayNotices = sysNotices.length > 0 ? sysNotices : [
+                { id: 1, text: '🎉 New Unit Booking: Tenant John Doe booked Unit T-201 at Modular Luxury Townhouses', time: '10 minutes ago', amount: 'KSh 45,000' },
+                { id: 2, text: '🎉 New Unit Booking: Tenant User booked Unit A-104 at Renta High-Rise Apartments', time: '1 hour ago', amount: 'KSh 35,000' },
+                { id: 3, text: '🎉 Rent Payment Cleared: Tenant Jane Smith cleared monthly rent for Unit A-102', time: 'Yesterday', amount: 'KSh 35,000' }
+              ];
 
-                <Grid container spacing={3} sx={{ mb: 4 }}>
-                  <MetricCard title="My Properties" value={metrics.myPropertiesCount || availableProperties.length} icon={ApartmentIcon} color="primary" />
-                  <MetricCard title="Total Units" value={metrics.totalUnits || 36} icon={HomeWorkIcon} color="info" />
-                  <MetricCard title="Occupancy Rate" value={`${metrics.occupancyRate || 91.2}%`} icon={TrendingUpIcon} color="success" />
-                  <MetricCard title="Expected Rent" value={`KSh ${(metrics.expectedRent || 400000).toLocaleString()}`} icon={MonetizationOnIcon} color="primary" />
-                  <MetricCard title="Collected Rent" value={`KSh ${(metrics.collectedRent || 380000).toLocaleString()}`} icon={MonetizationOnIcon} color="success" />
-                  <MetricCard title="Total Expenses" value={`KSh ${(metrics.expenses || 45000).toLocaleString()}`} icon={WalletIcon} color="error" />
-                  <MetricCard title="Net Income" value={`KSh ${(metrics.netIncome || 335000).toLocaleString()}`} icon={TrendingUpIcon} color="success" />
-                </Grid>
+              return (
+                <Box>
+                  <Alert severity="info" sx={{ mb: 3 }}>
+                    Landlord Investment View: Performance analytics for owned properties. Day-to-day operations are managed by your assigned Property Manager.
+                  </Alert>
 
-                {/* Instant Tenant Booking & Occupancy Notifications Feed for Property Owners */}
-                <Card sx={{ p: 3, borderRadius: 3, mb: 4, border: '1px solid #22c55e', bgcolor: '#f0fdf4' }}>
-                  <Typography variant="h6" fontWeight={700} color="success.main" mb={1} display="flex" alignItems="center" gap={1}>
-                    <CheckCircleIcon color="success" />
-                    Real-Time Property Booking Alerts &amp; Tenant Notifications
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary" mb={2}>
-                    As a registered Property Owner, whenever any tenant selects and pays for a unit in your properties, an instant system notification and lease booking entry is automatically created for your review.
-                  </Typography>
+                  <Grid container spacing={3} sx={{ mb: 4 }}>
+                    <MetricCard title="My Properties" value={metrics.myPropertiesCount || availableProperties.length} icon={ApartmentIcon} color="primary" />
+                    <MetricCard title="Total Units" value={metrics.totalUnits || 36} icon={HomeWorkIcon} color="info" />
+                    <MetricCard title="Occupancy Rate" value={`${metrics.occupancyRate || 91.2}%`} icon={TrendingUpIcon} color="success" />
+                    <MetricCard title="Expected Rent" value={`KSh ${(metrics.expectedRent || 400000).toLocaleString()}`} icon={MonetizationOnIcon} color="primary" />
+                    <MetricCard title="Collected Rent" value={`KSh ${displayCollected.toLocaleString()}`} icon={MonetizationOnIcon} color="success" />
+                    <MetricCard title="Total Expenses" value={`KSh ${(metrics.expenses || 45000).toLocaleString()}`} icon={WalletIcon} color="error" />
+                    <MetricCard title="Net Income" value={`KSh ${(displayCollected - 45000).toLocaleString()}`} icon={TrendingUpIcon} color="success" />
+                  </Grid>
 
-                  <Stack spacing={1.5}>
-                    {[
-                      { id: 1, text: '🎉 New Unit Booking: Tenant John Doe booked Unit T-201 at Modular Luxury Townhouses', time: '10 minutes ago', amount: 'KSh 45,000' },
-                      { id: 2, text: '🎉 New Unit Booking: Tenant User booked Unit A-104 at Renta High-Rise Apartments', time: '1 hour ago', amount: 'KSh 35,000' },
-                      { id: 3, text: '🎉 Rent Payment Cleared: Tenant Jane Smith cleared monthly rent for Unit A-102', time: 'Yesterday', amount: 'KSh 35,000' }
-                    ].map((notice) => (
-                      <Paper key={notice.id} variant="outlined" sx={{ p: 1.5, borderRadius: 2, bgcolor: '#ffffff', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <Box>
-                          <Typography variant="subtitle2" fontWeight={600} color="text.primary">
-                            {notice.text}
-                          </Typography>
-                          <Typography variant="caption" color="text.secondary">
-                            Timestamp: {notice.time}
-                          </Typography>
-                        </Box>
-                        <Chip label={notice.amount} color="success" size="small" sx={{ fontWeight: 800 }} />
-                      </Paper>
-                    ))}
-                  </Stack>
-                </Card>
-              </Box>
-            )}
+                  {/* Instant Tenant Booking & Occupancy Notifications Feed for Property Owners */}
+                  <Card sx={{ p: 3, borderRadius: 3, mb: 4, border: '1px solid #22c55e', bgcolor: '#f0fdf4' }}>
+                    <Typography variant="h6" fontWeight={700} color="success.main" mb={1} display="flex" alignItems="center" gap={1}>
+                      <CheckCircleIcon color="success" />
+                      Real-Time Property Booking Alerts &amp; Tenant Notifications ({displayNotices.length})
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary" mb={2}>
+                      As a registered Property Owner, whenever any tenant selects and pays for a unit in your properties, an instant system notification and lease booking entry is automatically created for your review.
+                    </Typography>
+
+                    <Stack spacing={1.5}>
+                      {displayNotices.map((notice) => (
+                        <Paper key={notice.id} variant="outlined" sx={{ p: 1.5, borderRadius: 2, bgcolor: '#ffffff', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                          <Box>
+                            <Typography variant="subtitle2" fontWeight={600} color="text.primary">
+                              {notice.text}
+                            </Typography>
+                            <Typography variant="caption" color="text.secondary">
+                              Timestamp: {notice.time}
+                            </Typography>
+                          </Box>
+                          <Chip label={notice.amount} color="success" size="small" sx={{ fontWeight: 800 }} />
+                        </Paper>
+                      ))}
+                    </Stack>
+                  </Card>
+                </Box>
+              );
+            })()}
 
             {/* 4. TENANT DASHBOARD (WITH ALL AVAILABLE PROPERTIES & DIRECT UNIT BOOKING) */}
             {role === 'TENANT' && (
