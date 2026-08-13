@@ -6,6 +6,7 @@ import PropertyManagement from './components/PropertyManagement';
 import TenantManagement from './components/TenantManagement';
 import TenantApplications from './components/TenantApplications';
 import LeaseManagement from './components/LeaseManagement';
+import OperationalCenter from './components/OperationalCenter';
 import RentPayment from './components/RentPayment';
 import MaintenanceRequests from './components/MaintenanceRequests';
 import ReportsAnalytics from './components/ReportsAnalytics';
@@ -146,6 +147,15 @@ function AppContent() {
               element={
                 <AdminRoute userRole={userRole}>
                   <LeaseManagement />
+                  {isAuthenticated && <Chatbot />}
+                </AdminRoute>
+              }
+            />
+            <Route
+              path="/operations"
+              element={
+                <AdminRoute userRole={userRole}>
+                  <OperationalCenter />
                   {isAuthenticated && <Chatbot />}
                 </AdminRoute>
               }
