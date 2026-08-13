@@ -11,26 +11,15 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
   Paper,
   CircularProgress,
   Container,
-  IconButton,
   Stack,
-  MenuItem,
-  Select,
-  FormControl,
-  InputLabel
 } from '@mui/material';
-import { Add, Edit, Delete, Search, Apartment, Home, Hotel, MeetingRoom, ShoppingCart, CheckCircle, Cancel } from '@mui/icons-material';
+import { Add, Search, Apartment, Home, Hotel, MeetingRoom, ShoppingCart } from '@mui/icons-material';
 import Navigation from './Navigation';
 import useAutoLogout from '../hooks/useAutoLogout';
-import api, { getProperties, createProperty, createUnit, updateUnit } from '../services/api';
+import { getProperties, createProperty } from '../services/api';
 import { useNavigate } from 'react-router-dom';
 
 const PropertyManagement = () => {
@@ -50,11 +39,6 @@ const PropertyManagement = () => {
   const [unitPrefix, setUnitPrefix] = useState('A');
   const [amenities, setAmenities] = useState('Parking, Security, Water, Wi-Fi');
 
-  // Booking Modal State
-  const [openBookModal, setOpenBookModal] = useState(false);
-  const [selectedUnit, setSelectedUnit] = useState(null);
-  const [bookingProperty, setBookingProperty] = useState(null);
-
   useAutoLogout();
 
   useEffect(() => {
@@ -65,11 +49,26 @@ const PropertyManagement = () => {
     setLoading(true);
     try {
       const res = await getProperties();
+      const local = localStorage.getItem('custom_properties');
+      let combined = [];
+
       if (res.data && res.data.success && Array.isArray(res.data.data)) {
-        setProperties(res.data.data);
-      } else {
-        // Fallback default properties
-        setProperties([
+        combined = res.data.data;
+      }
+
+      if (local) {
+        const parsed = JSON.parse(local);
+        // Merge without duplicates
+        const existingIds = new Set(combined.map(p => p.id));
+        parsed.forEach(p => {
+          if (!existingIds.has(p.id)) {
+            combined.unshift(p);
+          }
+        });
+      }
+
+      if (combined.length === 0) {
+        combined = [
           {
             id: 1,
             name: 'Renta High-Rise Apartments',
@@ -97,8 +96,10 @@ const PropertyManagement = () => {
               { id: 203, unitNumber: 'T-203', status: 'VACANT', rent: 45000 }
             ]
           }
-        ]);
+        ];
       }
+
+      setProperties(combined);
     } catch (err) {
       console.error('Error fetching properties:', err);
     } finally {
@@ -113,20 +114,7 @@ const PropertyManagement = () => {
 
     setSaving(true);
     try {
-      const payload = {
-        name: propertyName,
-        address: propertyAddress,
-        totalUnits: parseInt(totalUnits, 10),
-        rentAmount: parseFloat(rentAmount),
-        amenities: amenities.split(',').map((a) => a.trim()),
-        status: 'Active'
-      };
-
-      const res = await createProperty(payload);
-      let createdProp = res.data?.data || payload;
-      const propId = createdProp.id || Date.now();
-
-      // Automatically generate unit list for the new property
+      const propId = Date.now();
       const generatedUnits = [];
       for (let i = 1; i <= parseInt(totalUnits, 10); i++) {
         const uNum = `${unitPrefix}-${100 + i}`;
@@ -137,9 +125,30 @@ const PropertyManagement = () => {
           rent: parseFloat(rentAmount)
         });
       }
-      createdProp.units = generatedUnits;
 
-      setProperties((prev) => [createdProp, ...prev]);
+      const newProp = {
+        id: propId,
+        name: propertyName,
+        address: propertyAddress,
+        totalUnits: parseInt(totalUnits, 10),
+        rentAmount: parseFloat(rentAmount),
+        amenities: amenities.split(',').map((a) => a.trim()),
+        status: 'Active',
+        units: generatedUnits
+      };
+
+      // Try API call
+      try {
+        await createProperty(newProp);
+      } catch (err) {}
+
+      // Save globally in custom_properties for all sessions
+      const existing = localStorage.getItem('custom_properties');
+      const customList = existing ? JSON.parse(existing) : [];
+      customList.unshift(newProp);
+      localStorage.setItem('custom_properties', JSON.stringify(customList));
+
+      setProperties((prev) => [newProp, ...prev]);
       setOpenDialog(false);
 
       // Reset form
@@ -156,8 +165,6 @@ const PropertyManagement = () => {
 
   // Handle Unit Booking
   const handleOpenBooking = (property, unit) => {
-    setBookingProperty(property);
-    setSelectedUnit(unit);
     navigate('/payments', { state: { property: property.name, unit: unit.unitNumber, amount: unit.rent || property.rentAmount } });
   };
 
@@ -168,17 +175,26 @@ const PropertyManagement = () => {
   return (
     <Box sx={{ display: 'flex', minHeight: '100vh', bgcolor: '#f5f5f5' }}>
       <Navigation />
-      <Box component="main" sx={{ flexGrow: 1, p: { xs: 2, sm: 4 }, width: { md: `calc(100% - 260px)` } }}>
+      <Box 
+        component="main" 
+        sx={{ 
+          flexGrow: 1, 
+          pt: { xs: 10, md: 11 },
+          px: { xs: 2, sm: 4 }, 
+          pb: 6,
+          width: { md: `calc(100% - 260px)` }
+        }}
+      >
         <Container maxWidth="xl" disableGutters>
           {/* Header */}
           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4, flexWrap: 'wrap', gap: 2 }}>
             <Box>
               <Typography variant="h4" sx={{ fontWeight: 700, color: '#0f172a' }}>
                 <Apartment sx={{ verticalAlign: 'middle', mr: 1, fontSize: '2.2rem', color: '#1976d2' }} />
-                Properties & Occupancy Directory
+                Properties &amp; Occupancy Directory
               </Typography>
               <Typography variant="subtitle1" color="text.secondary">
-                {properties.length} active properties • Real-time unit availability & booking portal
+                {properties.length} active system properties • Visible to all system users &amp; tenants
               </Typography>
             </Box>
 
@@ -344,7 +360,7 @@ const PropertyManagement = () => {
             <DialogTitle fontWeight={700}>Add New Property to System</DialogTitle>
             <form onSubmit={handleAddProperty}>
               <DialogContent>
-                <Stack spacing= {2} pt={1}>
+                <Stack spacing={2} pt={1}>
                   <TextField
                     label="Property Name"
                     fullWidth

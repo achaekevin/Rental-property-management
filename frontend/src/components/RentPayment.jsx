@@ -297,7 +297,16 @@ const RentPayment = () => {
   return (
     <Box sx={{ display: 'flex', minHeight: '100vh', bgcolor: '#f5f5f5' }}>
       <Navigation />
-      <Box component="main" sx={{ flexGrow: 1, p: { xs: 2, sm: 4 }, width: { md: `calc(100% - 260px)` } }}>
+      <Box 
+        component="main" 
+        sx={{ 
+          flexGrow: 1, 
+          pt: { xs: 10, md: 11 },
+          px: { xs: 2, sm: 4 }, 
+          pb: 6,
+          width: { md: `calc(100% - 260px)` } 
+        }}
+      >
         <Container maxWidth="xl" disableGutters>
           {/* Header */}
           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4, flexWrap: 'wrap', gap: 2 }}>

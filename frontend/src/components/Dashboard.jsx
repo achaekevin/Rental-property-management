@@ -22,13 +22,15 @@ import {
   Search as SearchIcon,
   Add as AddIcon,
   Delete as DeleteIcon,
-  Edit as EditIcon,
-  Security as SecurityIcon
+  Security as SecurityIcon,
+  ShoppingCart as ShoppingCartIcon,
+  CheckCircle as CheckCircleIcon
 } from '@mui/icons-material';
 import Navigation from './Navigation';
 import { useTheme } from '@mui/material/styles';
-import api, { getUsers, getAuditLogs, createUser, deleteUser } from '../services/api';
+import api, { getUsers, getAuditLogs, createUser, deleteUser, getProperties } from '../services/api';
 import { exportToPDF, exportToExcel } from '../utils/exportUtils';
+import { useNavigate } from 'react-router-dom';
 
 // Metric Card Component
 const MetricCard = ({ title, value, color = 'primary', icon: Icon, trend }) => (
@@ -67,9 +69,11 @@ const MetricCard = ({ title, value, color = 'primary', icon: Icon, trend }) => (
 
 const Dashboard = () => {
   const theme = useTheme();
+  const navigate = useNavigate();
   const [statsData, setStatsData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [userRole, setUserRole] = useState(localStorage.getItem('userRole') || 'SUPER_ADMINISTRATOR');
+  const [availableProperties, setAvailableProperties] = useState([]);
 
   // M-Pesa STK Push Form State (Tenant Portal)
   const [mpesaPhone, setMpesaPhone] = useState('');
@@ -92,6 +96,7 @@ const Dashboard = () => {
 
   useEffect(() => {
     fetchStats();
+    fetchPropertiesList();
   }, []);
 
   const fetchStats = async () => {
@@ -111,6 +116,48 @@ const Dashboard = () => {
     }
   };
 
+  const fetchPropertiesList = async () => {
+    try {
+      const res = await getProperties();
+      if (res.data && res.data.success && Array.isArray(res.data.data)) {
+        setAvailableProperties(res.data.data);
+      } else {
+        const local = localStorage.getItem('custom_properties');
+        if (local) {
+          setAvailableProperties(JSON.parse(local));
+        } else {
+          setAvailableProperties([
+            {
+              id: 1,
+              name: 'Renta High-Rise Apartments',
+              address: 'Westlands Commercial District, Nairobi',
+              totalUnits: 12,
+              rentAmount: 35000,
+              units: [
+                { id: 101, unitNumber: 'A-101', status: 'VACANT', rent: 35000 },
+                { id: 102, unitNumber: 'A-102', status: 'OCCUPIED', rent: 35000 },
+                { id: 103, unitNumber: 'A-103', status: 'VACANT', rent: 35000 }
+              ]
+            },
+            {
+              id: 2,
+              name: 'Modular Luxury Townhouses',
+              address: 'Karen Heights Ridge, Nairobi',
+              totalUnits: 8,
+              rentAmount: 45000,
+              units: [
+                { id: 201, unitNumber: 'T-201', status: 'VACANT', rent: 45000 },
+                { id: 202, unitNumber: 'T-202', status: 'OCCUPIED', rent: 45000 }
+              ]
+            }
+          ]);
+        }
+      }
+    } catch (err) {
+      console.error('Error loading properties list:', err);
+    }
+  };
+
   // Open & Fetch Manage Users Modal
   const handleOpenUsersModal = async () => {
     setOpenUsersModal(true);
@@ -121,7 +168,6 @@ const Dashboard = () => {
         setUsersList(res.data.data || []);
       }
     } catch (err) {
-      // Fallback System Users if backend scoping applies
       setUsersList([
         { id: 1, name: 'Super Administrator', email: 'superadmin@renthive.com', role: 'SUPER_ADMINISTRATOR', phone: '0700000000', createdAt: '2025-01-01' },
         { id: 2, name: 'Property Manager', email: 'propertymanager@renthive.com', role: 'PROPERTY_MANAGER', phone: '0711111111', createdAt: '2025-01-10' },
@@ -201,6 +247,11 @@ const Dashboard = () => {
     }
   };
 
+  // Direct Unit Booking Navigation
+  const handleBookUnit = (property, unit) => {
+    navigate('/payments', { state: { property: property.name, unit: unit.unitNumber, amount: unit.rent || property.rentAmount } });
+  };
+
   const role = statsData?.role || userRole;
   const metrics = statsData?.metrics || {};
 
@@ -236,14 +287,15 @@ const Dashboard = () => {
       {/* Left Vertical Navigation Drawer */}
       <Navigation />
 
-      {/* Main Dashboard Content Layout */}
+      {/* Main Content Layout with Top Margin Padding Offset */}
       <Box 
         component="main" 
         sx={{ 
           flexGrow: 1, 
-          p: { xs: 2, sm: 4 }, 
-          width: { md: `calc(100% - 260px)` },
-          pb: 6 
+          pt: { xs: 10, md: 11 },
+          px: { xs: 2, sm: 4 }, 
+          pb: 6,
+          width: { md: `calc(100% - 260px)` }
         }}
       >
         {/* Dashboard Header with Export Actions */}
@@ -303,7 +355,7 @@ const Dashboard = () => {
                   <MetricCard title="Property Managers" value={metrics.totalPropertyManagers || 2} icon={PeopleIcon} color="info" />
                   <MetricCard title="Landlords Count" value={metrics.totalLandlords || 5} icon={PeopleIcon} color="success" />
                   <MetricCard title="Tenants Count" value={metrics.totalTenants || 24} icon={PeopleIcon} color="warning" />
-                  <MetricCard title="Total Properties" value={metrics.totalProperties || 8} icon={ApartmentIcon} color="primary" />
+                  <MetricCard title="Total Properties" value={metrics.totalProperties || availableProperties.length} icon={ApartmentIcon} color="primary" />
                   <MetricCard title="Total Units" value={metrics.totalUnits || 120} icon={HomeWorkIcon} color="info" />
                   <MetricCard title="Rent Collected" value={`KSh ${(metrics.totalRentCollected || 450000).toLocaleString()}`} icon={MonetizationOnIcon} color="success" />
                   <MetricCard title="Outstanding Rent" value={`KSh ${(metrics.outstandingRent || 45000).toLocaleString()}`} icon={WalletIcon} color="error" />
@@ -313,7 +365,7 @@ const Dashboard = () => {
                   <Grid item xs={12} md={6}>
                     <Card sx={{ p: 3, borderRadius: 2 }}>
                       <Typography variant="h6" fontWeight={600} mb={2}>
-                        System Health & Operations
+                        System Health &amp; Operations
                       </Typography>
                       <Alert severity="success" icon={<ShieldIcon />} sx={{ mb: 2 }}>
                         Platform System Status: <strong>{metrics.systemHealth || 'OPERATIONAL'}</strong>
@@ -324,7 +376,7 @@ const Dashboard = () => {
                     </Card>
                   </Grid>
 
-                  {/* PLATFORM ADMINISTRATION CONTROLS (FULLY FUNCTIONAL BUTTONS) */}
+                  {/* PLATFORM ADMINISTRATION CONTROLS */}
                   <Grid item xs={12} md={6}>
                     <Card sx={{ p: 3, borderRadius: 2 }}>
                       <Typography variant="h6" fontWeight={600} mb={2}>
@@ -364,7 +416,7 @@ const Dashboard = () => {
             {role === 'PROPERTY_MANAGER' && (
               <Box>
                 <Grid container spacing={3} sx={{ mb: 4 }}>
-                  <MetricCard title="Managed Properties" value={metrics.totalProperties || 4} icon={ApartmentIcon} color="primary" />
+                  <MetricCard title="Managed Properties" value={metrics.totalProperties || availableProperties.length} icon={ApartmentIcon} color="primary" />
                   <MetricCard title="Total Units" value={metrics.totalUnits || 60} icon={HomeWorkIcon} color="info" />
                   <MetricCard title="Occupancy Rate" value={`${metrics.occupancyRate || 88.5}%`} icon={TrendingUpIcon} color="success" />
                   <MetricCard title="Active Tenants" value={metrics.activeTenants || 52} icon={PeopleIcon} color="primary" />
@@ -393,7 +445,7 @@ const Dashboard = () => {
                 </Alert>
 
                 <Grid container spacing={3} sx={{ mb: 4 }}>
-                  <MetricCard title="My Properties" value={metrics.myPropertiesCount || 3} icon={ApartmentIcon} color="primary" />
+                  <MetricCard title="My Properties" value={metrics.myPropertiesCount || availableProperties.length} icon={ApartmentIcon} color="primary" />
                   <MetricCard title="Total Units" value={metrics.totalUnits || 36} icon={HomeWorkIcon} color="info" />
                   <MetricCard title="Occupancy Rate" value={`${metrics.occupancyRate || 91.2}%`} icon={TrendingUpIcon} color="success" />
                   <MetricCard title="Expected Rent" value={`KSh ${(metrics.expectedRent || 400000).toLocaleString()}`} icon={MonetizationOnIcon} color="primary" />
@@ -404,7 +456,7 @@ const Dashboard = () => {
               </Box>
             )}
 
-            {/* 4. TENANT DASHBOARD */}
+            {/* 4. TENANT DASHBOARD (WITH ALL AVAILABLE PROPERTIES & DIRECT UNIT BOOKING) */}
             {role === 'TENANT' && (
               <Box>
                 <Grid container spacing={3} sx={{ mb: 4 }}>
@@ -476,38 +528,120 @@ const Dashboard = () => {
                       <Typography variant="body2" color="text.secondary" mt={1}>
                         Track submitted maintenance requests, priority, and progress.
                       </Typography>
-                      <Button variant="outlined" color="warning" size="small" sx={{ mt: 2 }} href="/maintenance">
+                      <Button variant="outlined" color="warning" size="small" sx={{ mt: 2 }} onClick={() => navigate('/maintenance')}>
                         View Maintenance Requests
                       </Button>
                     </Card>
                   </Grid>
                 </Grid>
+
+                {/* UNIVERSAL AVAILABLE PROPERTIES & DIRECT UNIT BOOKING SECTION FOR TENANTS */}
+                <Card sx={{ p: 3.5, borderRadius: 3, border: '1px solid #cbd5e1' }}>
+                  <Box display="flex" justifyContent="space-between" alignItems="center" mb={2} flexWrap="wrap" gap={2}>
+                    <Box>
+                      <Typography variant="h5" fontWeight={700} color="primary">
+                        <ApartmentIcon sx={{ verticalAlign: 'middle', mr: 1 }} />
+                        All System Available Properties &amp; Vacant Units ({availableProperties.length})
+                      </Typography>
+                      <Typography variant="body2" color="text.secondary">
+                        Browse properties added by Super Admin &amp; Property Managers, view vacant unit status, and book instantly.
+                      </Typography>
+                    </Box>
+
+                    <Button 
+                      variant="contained" 
+                      color="primary"
+                      onClick={() => navigate('/properties')}
+                      sx={{ fontWeight: 700 }}
+                    >
+                      Browse Full Property Directory
+                    </Button>
+                  </Box>
+
+                  <Grid container spacing={3}>
+                    {availableProperties.map((prop) => (
+                      <Grid item xs={12} md={6} key={prop.id}>
+                        <Paper variant="outlined" sx={{ p: 2.5, borderRadius: 3, bgcolor: '#f8fafc' }}>
+                          <Box display="flex" justifyContent="space-between" alignItems="flex-start" mb={1.5}>
+                            <Box>
+                              <Typography variant="h6" fontWeight={700} color="text.primary">
+                                {prop.name}
+                              </Typography>
+                              <Typography variant="caption" color="text.secondary" display="block">
+                                📍 {prop.address}
+                              </Typography>
+                            </Box>
+                            <Chip label={`KSh ${(prop.rentAmount || 25000).toLocaleString()}/mo`} color="primary" size="small" sx={{ fontWeight: 700 }} />
+                          </Box>
+
+                          <Typography variant="caption" fontWeight={700} color="text.secondary" display="block" mb={1}>
+                            Vacant Units Available for Instant Booking:
+                          </Typography>
+
+                          <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
+                            {(prop.units || [
+                              { id: 1, unitNumber: 'Unit A-101', status: 'VACANT', rent: prop.rentAmount || 25000 },
+                              { id: 2, unitNumber: 'Unit A-102', status: 'OCCUPIED', rent: prop.rentAmount || 25000 },
+                              { id: 3, unitNumber: 'Unit A-103', status: 'VACANT', rent: prop.rentAmount || 25000 }
+                            ]).map((uItem) => {
+                              const isVacant = uItem.status === 'VACANT' || !uItem.occupied;
+                              return (
+                                <Box 
+                                  key={uItem.id || uItem.unitNumber}
+                                  sx={{
+                                    p: 1,
+                                    borderRadius: 2,
+                                    bgcolor: isVacant ? '#ffffff' : '#f1f5f9',
+                                    border: `1px solid ${isVacant ? '#22c55e' : '#cbd5e1'}`,
+                                    minWidth: 120,
+                                    textAlign: 'center'
+                                  }}
+                                >
+                                  <Typography variant="caption" fontWeight={700} display="block">
+                                    {uItem.unitNumber}
+                                  </Typography>
+                                  <Chip 
+                                    label={isVacant ? 'VACANT' : 'OCCUPIED'} 
+                                    color={isVacant ? 'success' : 'default'} 
+                                    size="small" 
+                                    sx={{ height: 18, fontSize: '0.62rem', fontWeight: 800, my: 0.5 }}
+                                  />
+                                  {isVacant && (
+                                    <Button
+                                      fullWidth
+                                      size="small"
+                                      variant="contained"
+                                      color="success"
+                                      startIcon={<ShoppingCartIcon style={{ fontSize: 13 }} />}
+                                      onClick={() => handleBookUnit(prop, uItem)}
+                                      sx={{ fontSize: '0.68rem', py: 0.2, fontWeight: 700, mt: 0.5 }}
+                                    >
+                                      Book Unit
+                                    </Button>
+                                  )}
+                                </Box>
+                              );
+                            })}
+                          </Stack>
+                        </Paper>
+                      </Grid>
+                    ))}
+                  </Grid>
+                </Card>
               </Box>
             )}
           </>
         )}
       </Box>
 
-      {/* ---------------------------------------------------- */}
-      {/* 1. MANAGE USERS DIALOG */}
-      {/* ---------------------------------------------------- */}
-      <Dialog 
-        open={openUsersModal} 
-        onClose={() => setOpenUsersModal(false)}
-        maxWidth="md"
-        fullWidth
-      >
+      {/* MANAGE USERS DIALOG */}
+      <Dialog open={openUsersModal} onClose={() => setOpenUsersModal(false)} maxWidth="md" fullWidth>
         <DialogTitle sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontWeight: 700 }}>
           <Box display="flex" alignItems="center" gap={1}>
             <PeopleIcon color="primary" />
             Platform User Management
           </Box>
-          <Button 
-            variant="contained" 
-            size="small" 
-            startIcon={<AddIcon />}
-            onClick={() => setNewUserOpen(true)}
-          >
+          <Button variant="contained" size="small" startIcon={<AddIcon />} onClick={() => setNewUserOpen(true)}>
             Add New User
           </Button>
         </DialogTitle>
@@ -587,9 +721,7 @@ const Dashboard = () => {
         </DialogActions>
       </Dialog>
 
-      {/* ---------------------------------------------------- */}
-      {/* ADD NEW USER DIALOG */}
-      {/* ---------------------------------------------------- */}
+      {/* CREATE NEW USER DIALOG */}
       <Dialog open={newUserOpen} onClose={() => setNewUserOpen(false)} maxWidth="xs" fullWidth>
         <DialogTitle fontWeight={700}>Create System User</DialogTitle>
         <DialogContent dividers>
@@ -645,18 +777,11 @@ const Dashboard = () => {
         </DialogActions>
       </Dialog>
 
-      {/* ---------------------------------------------------- */}
-      {/* 2. SYSTEM AUDIT LOGS DIALOG */}
-      {/* ---------------------------------------------------- */}
-      <Dialog 
-        open={openAuditModal} 
-        onClose={() => setOpenAuditModal(false)}
-        maxWidth="md"
-        fullWidth
-      >
+      {/* SYSTEM AUDIT LOGS DIALOG */}
+      <Dialog open={openAuditModal} onClose={() => setOpenAuditModal(false)} maxWidth="md" fullWidth>
         <DialogTitle sx={{ display: 'flex', alignItems: 'center', gap: 1, fontWeight: 700 }}>
           <SecurityIcon color="primary" />
-          System Security & Activity Audit Logs
+          System Security &amp; Activity Audit Logs
         </DialogTitle>
         <DialogContent dividers>
           <Box mb={2}>

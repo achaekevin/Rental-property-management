@@ -32,7 +32,6 @@ import {
   ExitToApp as LogoutIcon,
   Shield as ShieldIcon,
   Person as PersonIcon,
-  AccountCircle as AccountCircleIcon
 } from '@mui/icons-material';
 import { auth } from '../firebase';
 import { signOut } from 'firebase/auth';
@@ -98,10 +97,10 @@ const Navigation = () => {
       case 'SUPER_ADMINISTRATOR':
         return [
           { text: "Platform Dashboard", path: "/dashboard", icon: <DashboardIcon /> },
-          { text: "Properties", path: "/properties", icon: <PropertiesIcon /> },
-          { text: "Tenants", path: "/tenants", icon: <TenantsIcon /> },
-          { text: "Payments", path: "/payments", icon: <PaymentsIcon /> },
-          { text: "Maintenance", path: "/maintenance", icon: <MaintenanceIcon /> },
+          { text: "All Properties", path: "/properties", icon: <PropertiesIcon /> },
+          { text: "Tenants Directory", path: "/tenants", icon: <TenantsIcon /> },
+          { text: "Rent Payments", path: "/payments", icon: <PaymentsIcon /> },
+          { text: "Maintenance Log", path: "/maintenance", icon: <MaintenanceIcon /> },
           { text: "Reports & Analytics", path: "/reports", icon: <ReportsIcon /> },
           ...commonItems
         ];
@@ -129,7 +128,7 @@ const Navigation = () => {
       default:
         return [
           { text: "Tenant Dashboard", path: "/dashboard", icon: <DashboardIcon /> },
-          { text: "My Tenancy", path: "/properties", icon: <PropertiesIcon /> },
+          { text: "Available Properties", path: "/properties", icon: <PropertiesIcon /> },
           { text: "M-Pesa Payments", path: "/payments", icon: <PaymentsIcon /> },
           { text: "Maintenance Tickets", path: "/maintenance", icon: <MaintenanceIcon /> },
           ...commonItems
@@ -190,7 +189,7 @@ const Navigation = () => {
 
         {/* Vertical Feature Navigation Menu */}
         <Typography variant="caption" sx={{ px: 3, pt: 1, pb: 0.5, display: 'block', opacity: 0.6, fontWeight: 600, letterSpacing: 1 }}>
-          FEATURES MENU
+          NAVIGATION MENU
         </Typography>
 
         <List sx={{ px: 1.5 }}>
@@ -273,7 +272,7 @@ const Navigation = () => {
           ml: { md: `${DRAWER_WIDTH}px` },
           bgcolor: '#ffffff',
           color: '#1a237e',
-          boxShadow: '0 1px 4px rgba(0,0,0,0.08)',
+          boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
           zIndex: (theme) => theme.zIndex.drawer + 1
         }}
       >
@@ -285,7 +284,7 @@ const Navigation = () => {
               </IconButton>
             )}
             <Typography variant="h6" fontWeight={700} color="primary">
-              Renta Hive Dashboard
+              Renta Property Portal
             </Typography>
           </Box>
 
@@ -348,7 +347,7 @@ const Navigation = () => {
                 }}
               >
                 <ListItemIcon><PersonIcon fontSize="small" color="primary" /></ListItemIcon>
-                My Profile & Credentials
+                My Profile &amp; Credentials
               </MenuItem>
               <Divider />
               <MenuItem onClick={handleLogout}>
@@ -359,9 +358,6 @@ const Navigation = () => {
           </Box>
         </Toolbar>
       </AppBar>
-
-      {/* Spacing Offset for Fixed AppBar */}
-      <Toolbar />
 
       {/* Left Vertical Navigation Drawer */}
       <Box component="nav" sx={{ width: { md: DRAWER_WIDTH }, flexShrink: { md: 0 } }}>
